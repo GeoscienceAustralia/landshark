@@ -139,7 +139,7 @@ def import_targets(cli_runner, target_dir, target_name, target_flags, ncpus):
     return target_file
 
 
-def extract_training_data(cli_runner, target_file, target_name, ncpus):
+def extract_training_data(cli_runner, target_file, target_name, ncpus, halfwidth):
     all_args = [
         "--nworkers",
         ncpus,
@@ -155,6 +155,8 @@ def extract_training_data(cli_runner, target_file, target_name, ncpus):
         target_file,
         "--name",
         "sirsam",
+        "--halfwidth",
+        halfwidth
     ]
     res = _cli_run(cli_runner, landshark_extract_cli, all_args)
     trainingdata_folder = "traintest_sirsam_fold1of10"
@@ -162,7 +164,7 @@ def extract_training_data(cli_runner, target_file, target_name, ncpus):
     return trainingdata_folder
 
 
-def extract_query_data(cli_runner, feature_file, ncpus):
+def extract_query_data(cli_runner, feature_file, ncpus, halfwidth):
     all_args = [
         "--nworkers",
         ncpus,
@@ -176,6 +178,8 @@ def extract_query_data(cli_runner, feature_file, ncpus):
         10,
         "--name",
         "sirsam",
+        "--halfwidth",
+        halfwidth
     ]
     res = _cli_run(cli_runner, landshark_extract_cli, all_args)
     querydata_folder = "query_sirsam_strip5of10"
@@ -248,11 +252,11 @@ def test_full_pipeline(
     )
     print("Extracting training data...")
     trainingdata_folder = extract_training_data(
-        cli_runner, target_file, target_name, ncpus
+        cli_runner, target_file, target_name, ncpus, half_width
     )
 
     print("Extracting query data...")
-    querydata_folder = extract_query_data(cli_runner, feature_file, ncpus)
+    querydata_folder = extract_query_data(cli_runner, feature_file, ncpus, half_width)
     print("Training...")
     trained_model_dir = train(
         cli_runner,
@@ -281,18 +285,3 @@ def test_full_pipeline(
     for im in images:
         shutil.move(im, this_result_dir)
     shutil.rmtree(trained_model_dir, ignore_errors=True)
-
-
-# Importing tifs...
-# Running: landshark-import --nworkers 2 --batch-mb 0.001 tifs --name sirsam --ignore-crs --continuous /home/sudipta/repos/landshark/integration/data/continuous
-# Importing targets...
-# Running: landshark-import --batch-mb 0.001 targets --shapefile /home/sudipta/repos/landshark/integration/data/targets/geochem_sites.shp --name Na_ppm_i_1 --record Na_ppm_i_1 --dtype continuous
-# Extracting training data...
-# Running: landshark-extract --nworkers 2 --batch-mb 0.001 traintest --features features_sirsam.hdf5 --split 1 10 --targets targets_Na_ppm_i_1.hdf5 --name sirsam
-# Extracting query data...
-# Running: landshark-extract --nworkers 2 --batch-mb 0.001 query --features features_sirsam.hdf5 --strip 5 10 --name sirsam
-# Training...
-# Running: landshark train --data traintest_sirsam_fold1of10 --config /home/sudipta/repos/landshark/configs/nn_regression.py --epochs 200 --iterations 5
-# Predicting...
-# Running: cli --batch-mb 0.001 predict --config /home/sudipta/repos/landshark/configs/nn_regression.py --checkpoint nn_regression_model_1of10 --data query_sirsam_strip5of10
-# Cleaning up...

@@ -52,7 +52,7 @@ setup(
         "lru-dict>=1.1.6",
         "tqdm>=4.19.6",
         "scikit-learn>=0.20.0",
-        "tensorflow>=2.3.0",
+        "tensorflow==2.6.0",
         "tensorflow_probability>=0.11",
     ],
     extras_require={
@@ -62,7 +62,7 @@ setup(
             "pytest>=3.1.3",
             "pytest-flake8>=0.8.1",
             "pytest-mock>=1.6.2",
-            "flake8-black>=0.2.1",
+            # "flake8-black>=0.2.1",
             "flake8-bugbear>=18.2.0",
             "flake8-builtins>=1.4.1",
             "pytest-cov>=2.5.1",
