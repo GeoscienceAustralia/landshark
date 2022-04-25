@@ -79,12 +79,12 @@ def number_of_cpus(request: FixtureRequest) -> Any:
     return request.param
 
 
-@pytest.fixture(params=[0, 1])
+@pytest.fixture(params=[1])
 def half_width(request: FixtureRequest) -> Any:
     return request.param
 
 
-@pytest.fixture(params=["landshark"])
+@pytest.fixture(params=["landshark-keras"])
 def whichalgo(request: FixtureRequest) -> Any:
     return request.param
 
