@@ -25,7 +25,7 @@ from landshark.kerasmodel import (
     get_feat_input_list,
     impute_embed_concat_layer,
 )
-
+from landshark.metadata import Training
 
 def model(
     num_feats: List[NumFeatInput],
@@ -33,6 +33,7 @@ def model(
     indices: tf.keras.Input,
     coords: tf.keras.Input,
     targets: List[TargetData],
+    metadata: Training,
 ) -> tf.keras.Model:
     """Example model config.
     Must match the signature above and return a compiled tf.keras.Model
@@ -40,9 +41,14 @@ def model(
 
     l0 = impute_embed_concat_layer(num_feats, cat_feats, cat_embed_dims=3)
 
-    # Dense NN
-    l1 = tf.keras.layers.Dense(units=64, activation="relu")(l0)
-    l2 = tf.keras.layers.Dense(units=32, activation="relu")(l1)
+    if metadata.features.halfwidth > 0:
+        # Conv2D NN
+        l1 = tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation=tf.nn.relu)(l0)
+        l2 = tf.keras.layers.Conv2D(filters=32, kernel_size=2, activation=tf.nn.relu)(l1)
+    else:
+        # dense NN
+        l1 = tf.keras.layers.Dense(units=64, activation="relu")(l0)
+        l2 = tf.keras.layers.Dense(units=32, activation="relu")(l1)
 
     # Get some predictions for the labels
     n_outputs = sum(t.n_classes for t in targets)

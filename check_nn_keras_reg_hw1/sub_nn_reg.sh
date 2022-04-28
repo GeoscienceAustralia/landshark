@@ -18,6 +18,12 @@ landshark-extract --nworkers 0 --batch-mb 0.001 traintest \
   --name sirsam \
   --halfwidth 1
 
+landshark-extract --nworkers 0 --batch-mb 0.001 query \
+  --features features_sirsam.hdf5 \
+  --strip 5 10 --name sirsam \
+  --halfwidth 1
+
+
 rm -rf nn_regression_keras_model_1of10
 landshark --keras-model train \
   --data traintest_sirsam_fold1of10 \
@@ -25,3 +31,7 @@ landshark --keras-model train \
   --epochs 20 \
   --iterations 500
 
+landshark --keras-model --batch-mb 0.001 predict \
+  --config nn_regression_keras.py \
+  --checkpoint nn_regression_keras_model_1of10 \
+  --data query_sirsam_strip5of10

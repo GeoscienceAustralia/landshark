@@ -115,12 +115,8 @@ def model(
     # Build a simple CNN
     inputs = tf.concat(inputs_list, axis=3)
     if metadata.features.halfwidth > 0:
-        l1 = tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation=tf.nn.relu)(
-            inputs
-        )
-        l2 = tf.keras.layers.Conv2D(filters=32, kernel_size=2, activation=tf.nn.relu)(
-            l1
-        )
+        l1 = tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation=tf.nn.relu)(inputs)
+        l2 = tf.keras.layers.Conv2D(filters=32, kernel_size=2, activation=tf.nn.relu)(l1)
     else:
         l1 = tf.keras.layers.Dense(units=64, activation="relu")(inputs)
         l2 = tf.keras.layers.Dense(units=32, activation="relu")(l1)

@@ -64,12 +64,12 @@ target_files = {
 }
 
 
-@pytest.fixture(params=["both"])
+@pytest.fixture(params=["continuous-only", "categorical-only", "both"])
 def whichfeatures(request: FixtureRequest) -> Any:
     return request.param
 
 
-@pytest.fixture(params=["regression"])
+@pytest.fixture(params=["regression", "classification"])
 def whichproblem(request: FixtureRequest) -> Any:
     return request.param
 
@@ -79,12 +79,12 @@ def number_of_cpus(request: FixtureRequest) -> Any:
     return request.param
 
 
-@pytest.fixture(params=[1])
+@pytest.fixture(params=[0, 1])
 def half_width(request: FixtureRequest) -> Any:
     return request.param
 
 
-@pytest.fixture(params=["landshark-keras"])
+@pytest.fixture(params=["landshark", "skshark", "landshark-keras"])
 def whichalgo(request: FixtureRequest) -> Any:
     return request.param
 

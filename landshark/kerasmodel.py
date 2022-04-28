@@ -284,7 +284,7 @@ def train_test(
     inputs = gen_keras_inputs(xtrain, metadata)
     targets = get_target_data(metadata.targets)
 
-    model = cf.model(*inputs, targets)
+    model = cf.model(*inputs, targets, metadata)
 
     weights_file = Path(directory) / "checkpoint_weights.h5"
     if weights_file.exists():
@@ -335,7 +335,7 @@ def predict(
     targets = get_target_data(metadata.targets)
     x = x.map(flatten_dataset_x)
 
-    model = cf.model(*inputs, targets)
+    model = cf.model(*inputs, targets, metadata)
 
     weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
     if weights_file.exists():
