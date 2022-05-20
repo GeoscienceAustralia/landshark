@@ -33,6 +33,7 @@ from typing import (
 )
 
 import tensorflow as tf
+from tensorflow.keras.utils import plot_model
 
 from landshark.metadata import CategoricalTarget, Target, Training
 from landshark.model import QueryConfig, TrainingConfig
@@ -285,6 +286,7 @@ def train_test(
     targets = get_target_data(metadata.targets)
 
     model = cf.model(*inputs, targets, metadata)
+    plot_model(model, to_file=Path(directory) / "model.pdf", show_shapes=True, show_layer_names=True, dpi=1024)
 
     weights_file = Path(directory) / "checkpoint_weights.h5"
     if weights_file.exists():
