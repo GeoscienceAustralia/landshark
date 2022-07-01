@@ -9,8 +9,6 @@ landshark-import --batch-mb 0.001 targets \
   --record Na_ppm_i_1 \
   --dtype continuous
 
-
-rm -rf traintest_sirsam_fold1of10
 landshark-extract --nworkers 0 --batch-mb 0.001 traintest \
   --features features_sirsam.hdf5 \
   --split 1 10 \
@@ -24,7 +22,6 @@ landshark-extract --nworkers 0 --batch-mb 0.001 query \
   --halfwidth 1
 
 
-rm -rf nn_regression_keras_model_1of10
 landshark --keras-model train \
   --data traintest_sirsam_fold1of10 \
   --config nn_regression_keras.py \
