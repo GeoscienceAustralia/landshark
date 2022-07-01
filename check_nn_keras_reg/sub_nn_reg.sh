@@ -20,7 +20,7 @@ landshark --keras-model train \
   --data traintest_sirsam_fold1of10 \
   --config nn_regression_keras.py \
   --epochs 20 \
-  --iterations 500
+  --iterations 50
 
 landshark-extract query \
     --features features_sirsam.hdf5 \

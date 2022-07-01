@@ -26,7 +26,7 @@ landshark --keras-model train \
   --data traintest_sirsam_fold1of10 \
   --config nn_regression_keras.py \
   --epochs 20 \
-  --iterations 500
+  --iterations 50
 
 landshark --keras-model --batch-mb 0.001 predict \
   --config nn_regression_keras.py \
