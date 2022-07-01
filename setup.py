@@ -53,7 +53,9 @@ setup(
         "tqdm>=4.19.6",
         "scikit-learn>=0.20.0",
         "tensorflow==2.6.0",
+        "keras==2.6.0",
         "tensorflow_probability>=0.11",
+        "pydot~=1.4.2"
     ],
     extras_require={
         "dev": [
