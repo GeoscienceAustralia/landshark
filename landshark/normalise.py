@@ -79,7 +79,7 @@ class StatCounter:
 
 class Normaliser(Worker):
     def __init__(
-        self, mean: np.ndarray, sd: np.ndarray, missing: Optional[ContinuousType]
+            self, mean: np.ndarray, sd: np.ndarray, missing: Optional[ContinuousType]
     ) -> None:
         self._mean = mean
         self._sd = sd
@@ -93,12 +93,13 @@ class Normaliser(Worker):
 
 
 def get_stats(
-    src: ContinuousArraySource, batchrows: int
+        src: ContinuousArraySource, batchrows: int
 ) -> Tuple[np.ndarray, np.ndarray]:
     log.info("Computing continuous feature statistics")
     n_rows = src.shape[0]
     n_cols = src.shape[-1]
     stats = StatCounter(n_cols)
+    log.debug(f"model contains the following columns: \n {src.columns}")
     with tqdm(total=n_rows) as pbar:
         with src:
             for s in iteration.batch_slices(batchrows, n_rows):

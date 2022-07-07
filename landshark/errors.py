@@ -56,7 +56,7 @@ class ZeroDeviation(Error):
     """Zero standard deviation in supplied column."""
 
     def __init__(self, sd: np.ndarray, cols: List[str]) -> None:
-        zsrcs = [c for z, c in zip(sd, cols) if z]
+        zsrcs = [c for z, c in zip(sd, cols) if z == 0]
         super().__init__(
             f"The following sources have bands with zero standard deviation: {zsrcs}"
         )
