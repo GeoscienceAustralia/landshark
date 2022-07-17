@@ -289,6 +289,7 @@ def train_test(
     plot_model(model, to_file=Path(directory) / "model.pdf", show_shapes=True, show_layer_names=True, dpi=1024)
 
     weights_file = Path(directory) / "checkpoint_weights.h5"
+    scores_files = Path(directory) / "training_scores.csv"
     if weights_file.exists():
         model.load_weights(str(weights_file))
 
@@ -301,6 +302,7 @@ def train_test(
         tf.keras.callbacks.ModelCheckpoint(str(weights_file), save_best_only=True),
         tf.keras.callbacks.EarlyStopping(patience=50),
         UpdateCallback(params.epochs, iterations),
+        tf.keras.callbacks.CSVLogger(str(scores_files), separator=',', append=False)
     ]
 
     try:
