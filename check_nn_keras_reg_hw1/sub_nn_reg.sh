@@ -16,19 +16,42 @@ landshark-extract --nworkers 0 --batch-mb 0.001 traintest \
   --name sirsam \
   --halfwidth 1
 
-landshark-extract --nworkers 0 --batch-mb 0.001 query \
-  --features features_sirsam.hdf5 \
-  --strip 5 10 --name sirsam \
-  --halfwidth 1
-
-
 landshark --keras-model train \
   --data traintest_sirsam_fold1of10 \
   --config nn_regression_keras.py \
   --epochs 20 \
   --iterations 50
 
-landshark --keras-model --batch-mb 0.001 predict \
-  --config nn_regression_keras.py \
-  --checkpoint nn_regression_keras_model_1of10 \
-  --data query_sirsam_strip5of10
+export N=10
+function query_predict {
+    echo starting query and preict $1 of $2
+    n=$1
+    N=$2
+    landshark-extract --nworkers 0 --batch-mb 0.001 query \
+        --features features_sirsam.hdf5 \
+        --strip ${n} ${N} --name sirsam \
+        --halfwidth 1
+    landshark --keras-model --batch-mb 0.001 predict \
+        --config nn_regression_keras.py \
+        --checkpoint nn_regression_keras_model_1of10 \
+        --data query_sirsam_strip${n}of${N}
+    echo done query and preict $1 of $2
+}
+export -f query_predict
+
+# gdal_merge.py -o merged.tif nn_regression_keras_model_1of10/predictions_Na_ppm_i_1_*of4.tif
+
+#for n in {1..N};
+#  do echo $n;
+#
+#done
+#
+#landshark-extract --nworkers 0 --batch-mb 0.001 query \
+#  --features features_sirsam.hdf5 \
+#  --strip 5 10 --name sirsam \
+#  --halfwidth 1
+#
+#landshark --keras-model --batch-mb 0.001 predict \
+#  --config nn_regression_keras.py \
+#  --checkpoint nn_regression_keras_model_1of10 \
+#  --data query_sirsam_strip5of10
