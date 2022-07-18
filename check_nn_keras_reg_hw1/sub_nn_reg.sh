@@ -22,7 +22,6 @@ landshark --keras-model train \
   --epochs 20 \
   --iterations 50
 
-export N=10
 function query_predict {
     echo starting query and preict $1 of $2
     n=$1
@@ -38,6 +37,13 @@ function query_predict {
     echo done query and preict $1 of $2
 }
 export -f query_predict
+
+parallel query_predict ::: {1..5} ::: 5
+#1 5
+#2 5
+#3 5
+#4 5
+#5 5
 
 # gdal_merge.py -o merged.tif nn_regression_keras_model_1of10/predictions_Na_ppm_i_1_*of4.tif
 
