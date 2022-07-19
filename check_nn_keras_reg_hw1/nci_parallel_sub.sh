@@ -17,3 +17,9 @@ mpirun -np $((PBS_NCPUS/ncores_per_task)) --map-by ppr:$((ncores_per_numanode/nc
 
 # to create cmds.txt use the for loop like this:
 # for i in {1..384}; do echo $i; echo ./pred_parts.sh $i 384 >> cmds.txt; done
+# generate merge statement
+# merge statement
+# echo gdal_merge.py -o predictions_log_cond_1.tif \\ > merge.txt
+# for i in {1..384}; do echo nn_regression_keras_global_local_model_6of10/predictions_log_cond_1_${i}of384.tif >> merge.txt \\ ; done
+# bash merge.txt
+
