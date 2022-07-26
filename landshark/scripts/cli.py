@@ -83,7 +83,14 @@ def cli(
     "--data",
     type=click.Path(exists=True),
     required=True,
-    help="The traintest folder containing the data",
+    help="The traintest or trainvalidation folder containing the data",
+)
+@click.option(
+    "--trainvalidation",
+    type=click.BOOL,
+    required=False,
+    default=False,
+    help="Whether the data folder is a traintes or trainvalidation folder",
 )
 @click.option(
     "--config",
@@ -122,6 +129,7 @@ def cli(
 def train(
     ctx: click.Context,
     data: str,
+    trainvalidation: bool,
     config: str,
     epochs: int,
     batchsize: int,
@@ -134,6 +142,7 @@ def train(
     catching_f = errors.catch_and_exit(train_entrypoint)
     catching_f(
         data,
+        trainvalidation,
         config,
         ctx.obj.keras,
         epochs,
@@ -147,6 +156,7 @@ def train(
 
 def train_entrypoint(
     data: str,
+    trainvalidation: bool,
     config: str,
     keras: bool,
     epochs: int,
@@ -159,7 +169,7 @@ def train_entrypoint(
     """Entry point for training function."""
     train_test_fn = keras_train_test if keras else train_test
     metadata, training_records, testing_records, model_dir, cf = setup_training(
-        config, data
+        config, data, trainvalidation
     )
     if checkpoint_dir:
         overwrite_model_dir(model_dir, checkpoint_dir)

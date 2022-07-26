@@ -293,7 +293,7 @@ def write_coordinates(
         _make_str_vlarray(h5file, "coordinates_columns", array_src.columns)
         array.attrs.missing = array_src.missing
         for s in batch_slices(batchsize, array_src.shape[0]):
-            array[s.start : s.stop] = array_src(s)
+            array[s.start: s.stop] = array_src(s)
 
 
 def _make_int_vlarray(h5file: tables.File, name: str, attribute: np.ndarray) -> None:

@@ -68,13 +68,15 @@ def load_model(config_file: str) -> str:
 
 
 def setup_training(
-    config: str, directory: str
+    config: str, directory: str, train_validation: bool
 ) -> Tuple[Training, List[str], List[str], str, str]:
     """Get metadata and records needed to train model."""
-    metadata, training_records, testing_records = get_training_meta(directory)
-
+    metadata, training_records, testing_records = get_training_meta(directory, train_validation)
     # Write the metadata
-    name = os.path.basename(config).rsplit(".")[0] + "_model_{}of{}".format(
+    name = os.path.basename(config).rsplit(".")[0] + "_model_{}_{}".format(
+        "train", "validation"
+    ) if train_validation else \
+        os.path.basename(config).rsplit(".")[0] + "_model_{}of{}".format(
         metadata.testfold, metadata.nfolds
     )
     model_dir = os.path.join(os.getcwd(), name)

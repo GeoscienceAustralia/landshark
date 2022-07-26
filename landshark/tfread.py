@@ -58,11 +58,13 @@ def dataset_fn(
     return f
 
 
-def get_training_meta(directory: str) -> Tuple[Training, List[str], List[str]]:
+def get_training_meta(directory: str, train_validation: bool) -> Tuple[Training, List[str], List[str]]:
     """Read train/test metadata and record filenames from dir."""
-    test_dir = os.path.join(directory, "testing")
-    training_records = glob(os.path.join(directory, "*.tfrecord"))
-    testing_records = glob(os.path.join(test_dir, "*.tfrecord"))
+    test_dir = directory if train_validation else os.path.join(directory, "testing")
+    training_records = glob(os.path.join(directory, "train.*.tfrecord"))
+    testing_records = glob(os.path.join(test_dir, "validation.*.tfrecord")) if train_validation else \
+        glob(os.path.join(test_dir, "test.*.tfrecord"))
+    log.info(f"Using test data {testing_records}")
     metadata = Training.load(directory)
     return metadata, training_records, testing_records
 
