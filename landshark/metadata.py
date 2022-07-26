@@ -211,3 +211,19 @@ class Training(PickleObj):
         self.nfolds = nfolds
         self.testfold = testfold
         self.fold_counts = fold_counts
+
+
+class TrainingValidate(PickleObj):
+
+    _filename = "TRAINING.bin"
+
+    def __init__(
+            self,
+            targets: Target,
+            validation: Target,
+            features: FeatureSet,
+    ) -> None:
+        self.targets = targets
+        self.validation = validation
+        self.features = features
+

@@ -26,8 +26,10 @@ from landshark import metadata as meta
 from landshark.dataprocess import (
     ProcessQueryArgs,
     ProcessTrainingArgs,
+    ProcessTrainingValidationArgs,
     write_querydata,
     write_trainingdata,
+    write_training_validation_data,
 )
 from landshark.featurewrite import read_feature_metadata, read_target_metadata
 from landshark.hread import CategoricalH5ArraySource, ContinuousH5ArraySource
@@ -185,6 +187,122 @@ def traintest_entrypoint(
         fold_counts=kfolds.counts,
     )
     training_metadata.save(directory)
+    log.info("Training import complete")
+
+
+@cli.command()
+@click.option(
+    "--targets",
+    type=click.Path(exists=True),
+    required=True,
+    help="Target HDF5 file from which to read",
+)
+@click.option(
+    "--validation",
+    type=click.Path(exists=True),
+    required=True,
+    help="Validation HDF5 file from which to read",
+)
+@click.option(
+    "--random_seed",
+    type=int,
+    default=666,
+    help="Random state for assigning data to folds",
+)
+@click.option("--name", type=str, required=True, help="Name of the output folder")
+@click.option(
+    "--features",
+    type=click.Path(exists=True),
+    required=True,
+    help="Feature HDF5 file from which to read",
+)
+@click.option(
+    "--halfwidth",
+    type=int,
+    default=0,
+    help="half width of patch size. Patch side length is " "2 x halfwidth + 1",
+)
+@click.pass_context
+def trainvalidate(
+        ctx: click.Context,
+        targets: str,
+        validation: str,
+        random_seed: int,
+        name: str,
+        features: str,
+        halfwidth: int,
+) -> None:
+    """Extract training and testing data to train and validate a model."""
+    # fold, nfolds = split
+    catching_f = errors.catch_and_exit(trainvalidate_entrypoint)
+    catching_f(
+        targets,
+        validation,
+        random_seed,
+        name,
+        halfwidth,
+        ctx.obj.nworkers,
+        features,
+        ctx.obj.batchMB,
+    )
+
+
+def trainvalidate_entrypoint(
+        targets: str,
+        validation: str,
+        random_seed: int,
+        name: str,
+        halfwidth: int,
+        nworkers: int,
+        features: str,
+        batchMB: float,
+) -> None:
+    """Get training data."""
+    feature_metadata = read_feature_metadata(features)
+    feature_metadata.halfwidth = halfwidth
+    target_metadata = read_target_metadata(targets)
+    validation_metadata = read_target_metadata(validation)
+    batchsize = points_per_batch(feature_metadata, batchMB)
+    target_src = (
+        CategoricalH5ArraySource(targets)
+        if isinstance(target_metadata, meta.CategoricalTarget)
+        else ContinuousH5ArraySource(targets)
+    )
+
+    validation_src = (
+        CategoricalH5ArraySource(validation)
+        if isinstance(validation_metadata, meta.CategoricalTarget)
+        else ContinuousH5ArraySource(validation)
+    )
+
+    kfolds = KFolds(len(target_src), 10, random_seed)
+    vkfolds = KFolds(len(validation_src), 10, random_seed)
+
+    directory = os.path.join(
+        os.getcwd(), "trainvalidate_{}".format(name, targets)
+    )
+
+    args = ProcessTrainingValidationArgs(
+        name=name,
+        feature_path=features,
+        target_src=target_src,
+        validation_src=validation_src,
+        image_spec=feature_metadata.image,
+        halfwidth=halfwidth,
+        directory=directory,
+        batchsize=batchsize,
+        nworkers=nworkers,
+        train_folds=kfolds,
+        validation_folds=vkfolds,
+    )
+
+    write_training_validation_data(args)
+    training_val_metadata = meta.TrainingValidate(
+        targets=target_metadata,
+        validation=validation_metadata,
+        features=feature_metadata,
+    )
+    training_val_metadata.save(directory)
     log.info("Training import complete")
 
 

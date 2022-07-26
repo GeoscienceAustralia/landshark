@@ -42,12 +42,13 @@ def training(
     output_directory: str,
     testfold: int,
     folds: Iterator[np.ndarray],
+    tag: str="train"
 ) -> None:
     """Write training data to tfrecord."""
     test_directory = os.path.join(output_directory, "testing")
     if not os.path.exists(test_directory):
         os.makedirs(test_directory)
-    writer = _MultiFileWriter(output_directory, tag="train")
+    writer = _MultiFileWriter(output_directory, tag=tag)
     test_writer = _MultiFileWriter(test_directory, tag="test")
 
     for d, f in zip(data, folds):

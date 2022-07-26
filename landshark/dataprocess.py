@@ -57,6 +57,20 @@ class ProcessTrainingArgs(NamedTuple):
     nworkers: int
 
 
+class ProcessTrainingValidationArgs(NamedTuple):
+    name: str
+    feature_path: str
+    target_src: ArraySource
+    validation_src: ArraySource
+    image_spec: ImageSpec
+    halfwidth: int
+    train_folds: KFolds
+    validation_folds: KFolds
+    directory: str
+    batchsize: int
+    nworkers: int
+
+
 class ProcessQueryArgs(NamedTuple):
     name: str
     feature_path: str
@@ -277,6 +291,31 @@ class Serialised(Worker):
         arrays = self.worker(x)
         strings = serialise(arrays)
         return strings
+
+
+def write_training_validation_data(args: ProcessTrainingValidationArgs) -> None:
+    """Write training data to tfrecord."""
+    log.info("Target and Validation data are {} of {}".format(args.target_src, args.validation_src))
+    log.info(
+        "Writing training data to tfrecord in {}-point batches".format(args.batchsize)
+    )
+    # write the train data
+    n_rows = len(args.target_src)
+    worker = _TrainingDataProcessor(args.feature_path, args.image_spec, args.halfwidth)
+    sworker = Serialised(worker)
+    tasks = list(batch_slices(args.batchsize, n_rows))
+    out_it = task_list(tasks, args.target_src, sworker, args.nworkers)
+    fold_it = args.train_folds.iterator(args.batchsize)
+    tfwrite.training(out_it, n_rows, args.directory, testfold=-1, folds=fold_it)
+
+    # write the validation data
+    n_rows = len(args.validation_src)
+    worker = _TrainingDataProcessor(args.feature_path, args.image_spec, args.halfwidth)
+    sworker = Serialised(worker)
+    tasks = list(batch_slices(args.batchsize, n_rows))
+    out_it = task_list(tasks, args.validation_src, sworker, args.nworkers)
+    fold_it = args.validation_folds.iterator(args.batchsize)
+    tfwrite.training(out_it, n_rows, args.directory, testfold=-1, folds=fold_it, tag="validation")
 
 
 def write_trainingdata(args: ProcessTrainingArgs) -> None:
