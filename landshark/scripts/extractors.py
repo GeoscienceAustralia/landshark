@@ -281,19 +281,31 @@ def trainvalidate_entrypoint(
     directory = os.path.join(
         os.getcwd(), "trainvalidate_{}".format(name, targets)
     )
-
     args = ProcessTrainingValidationArgs(
-        name=name,
-        feature_path=features,
-        target_src=target_src,
-        validation_src=validation_src,
-        image_spec=feature_metadata.image,
-        halfwidth=halfwidth,
-        directory=directory,
-        batchsize=batchsize,
-        nworkers=nworkers,
-        train_folds=kfolds,
-        validation_folds=vkfolds,
+        training_args=ProcessTrainingArgs(
+            name=name,
+            feature_path=features,
+            target_src=target_src,
+            image_spec=feature_metadata.image,
+            halfwidth=halfwidth,
+            directory=directory,
+            batchsize=batchsize,
+            nworkers=nworkers,
+            testfold=-1,  # no test fold, the whole shapefile is training set
+            folds=kfolds,
+          ),
+        validation_args=ProcessTrainingArgs(
+            name=name,
+            feature_path=features,
+            target_src=validation_src,
+            image_spec=feature_metadata.image,
+            halfwidth=halfwidth,
+            directory=directory,
+            batchsize=batchsize,
+            nworkers=nworkers,
+            testfold=-1,  # no test fold, the entire shapefile is validation set
+            folds=vkfolds
+        )
     )
 
     write_training_validation_data(args)
