@@ -55,6 +55,7 @@ class ProcessTrainingArgs(NamedTuple):
     directory: str
     batchsize: int
     nworkers: int
+    tag: str
 
 
 class ProcessTrainingValidationArgs:
@@ -292,7 +293,7 @@ def write_training_validation_data(args: ProcessTrainingValidationArgs) -> None:
     # write training data
     write_trainingdata(args.training_args)
     # write the validation data
-    write_trainingdata(args.training_args)
+    write_trainingdata(args.validation_args)
 
 
 def write_trainingdata(args: ProcessTrainingArgs) -> None:
@@ -307,7 +308,7 @@ def write_trainingdata(args: ProcessTrainingArgs) -> None:
     tasks = list(batch_slices(args.batchsize, n_rows))
     out_it = task_list(tasks, args.target_src, sworker, args.nworkers)
     fold_it = args.folds.iterator(args.batchsize)
-    tfwrite.training(out_it, n_rows, args.directory, args.testfold, fold_it)
+    tfwrite.training(out_it, n_rows, args.directory, args.testfold, fold_it, args.tag)
 
 
 def write_querydata(args: ProcessQueryArgs) -> None:

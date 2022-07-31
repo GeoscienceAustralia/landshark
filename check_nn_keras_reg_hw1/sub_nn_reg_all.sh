@@ -1,3 +1,4 @@
+set -e
 landshark-import --nworkers 0 --batch-mb 0.001 tifs \
     --name sirsam \
     --ignore-crs  \

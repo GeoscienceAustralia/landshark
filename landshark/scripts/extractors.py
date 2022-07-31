@@ -177,6 +177,7 @@ def traintest_entrypoint(
         directory=directory,
         batchsize=batchsize,
         nworkers=nworkers,
+        tag='train',
     )
     write_trainingdata(args)
     training_metadata = meta.Training(
@@ -293,6 +294,7 @@ def trainvalidate_entrypoint(
             nworkers=nworkers,
             testfold=-1,  # no test fold, the whole shapefile is training set
             folds=kfolds,
+            tag='train',
           ),
         validation_args=ProcessTrainingArgs(
             name=name,
@@ -304,7 +306,8 @@ def trainvalidate_entrypoint(
             batchsize=batchsize,
             nworkers=nworkers,
             testfold=-1,  # no test fold, the entire shapefile is validation set
-            folds=vkfolds
+            folds=vkfolds,
+            tag='validation',
         )
     )
 
