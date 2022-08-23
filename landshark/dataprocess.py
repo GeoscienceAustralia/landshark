@@ -287,9 +287,9 @@ class Serialised(Worker):
 
 
 def write_training_validation_data(args: ProcessTrainingValidationArgs) -> None:
-    """Write training data to tfrecord."""
-    log.info("Target and Validation data are {} of {}".format(args.training_args.target_src.shape,
-                                                              args.validation_args.target_src.shape))
+    """Write training and validation data to tfrecord."""
+    log.info("Target and Validation data sizes are {} of {}".format(args.training_args.target_src.shape,
+                                                                    args.validation_args.target_src.shape))
     # write training data
     write_trainingdata(args.training_args)
     # write the validation data

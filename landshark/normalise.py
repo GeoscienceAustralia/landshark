@@ -52,7 +52,7 @@ class StatCounter:
 
         delta = new_mean - self._mean
         delta_mean = delta * (new_n / add_n)
-
+        log.info(f"Features with the following Mean: {self._mean}")
         self._mean += delta_mean
         self._m2 += new_m2 + (delta * self._n * delta_mean)
         self._n += new_n
@@ -99,7 +99,7 @@ def get_stats(
     n_rows = src.shape[0]
     n_cols = src.shape[-1]
     stats = StatCounter(n_cols)
-    log.debug(f"model contains the following columns: \n {src.columns}")
+    log.info(f"model contains the following columns: \n {src.columns}")
     with tqdm(total=n_rows) as pbar:
         with src:
             for s in iteration.batch_slices(batchrows, n_rows):
