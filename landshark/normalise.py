@@ -52,7 +52,7 @@ class StatCounter:
 
         delta = new_mean - self._mean
         delta_mean = delta * (new_n / add_n)
-        log.info(f"Features with the following Mean: {self._mean}")
+        # log.error(f"Features with the following Mean: {self._mean}")
         self._mean += delta_mean
         self._m2 += new_m2 + (delta * self._n * delta_mean)
         self._n += new_n
