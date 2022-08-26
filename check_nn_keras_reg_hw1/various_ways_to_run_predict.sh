@@ -8,9 +8,12 @@
 # gdal_merge.py -o merged.tif nn_regression_keras_model_1of10/predictions_Na_ppm_i_1_*of4.tif
 
 # merge statement
-# echo gdal_merge.py -o predictions_log_cond_1.tif \\ > merge.txt
+# echo gdal_merge.py \\ > merge.txt
 # for i in {1..384}; do echo nn_regression_keras_global_local_model_6of10/predictions_log_cond_1_${i}of384.tif >> merge.txt \\ ; done
+# echo -o predictions_log_cond_1.tif >> merge.txt
 # bash merge.txt
+# convert to cogs
+# -t_srs EPSG:3577 -of COG -co BIGTIFF=YES -co COMPRESS=LZW
 
 #for n in {1..N};
 #  do echo $n;

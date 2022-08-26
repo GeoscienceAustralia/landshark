@@ -50,6 +50,7 @@ def model(
 
     # Conv2D NN
     l1 = tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation=tf.nn.relu)(l0)
+    # l2 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(l1)
     l2 = tf.keras.layers.Conv2D(filters=32, kernel_size=2, activation=tf.nn.relu)(l1)
 
     # Get some predictions for the labels
@@ -64,6 +65,7 @@ def model(
     model_inputs = get_feat_input_list(num_feats, cat_feats)
     model = tf.keras.Model(inputs=model_inputs, outputs=ys)
     optimizer = tf.keras.optimizers.Adam()
-    model.compile(loss="mean_squared_error", optimizer=optimizer, metrics=[r2])
+    mse_loss = tf.keras.losses.MeanSquaredError()
+    model.compile(loss=mse_loss, optimizer=optimizer, metrics=[r2])
     model.summary()
     return model
