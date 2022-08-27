@@ -14,9 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import pytest
 
-from landshark.kfold import KFolds
+from landshark.kfold import KFolds, GroupKFold
 
 fold_params = [(10, 2, 5), (123456, 10, 99)]
 
@@ -32,4 +33,29 @@ def test_kfolds(N, K, B):
     assert min(ixs_flat) > 0
     assert max(ixs_flat) <= K
     assert set(folds.counts.keys()) == set(range(1, K + 1))
+    assert sum(folds.counts.values()) == N
+
+
+rnd = np.random.RandomState(23)
+group_kfold_params = [
+    (rnd.randint(5, 15, size=3000), 100, 12),
+    (rnd.randint(5, 15, size=10000), 2000, 13),
+    (rnd.randint(5, 15, size=3000), 100, 666),
+    (rnd.randint(5, 15, size=3000), 66, 667)
+]
+
+
+@pytest.mark.parametrize("groups,B,seed", group_kfold_params)
+def test_group_kfolds(groups, B, seed):
+    folds = GroupKFold(groups, seed=seed)
+    ixs = list(folds.iterator(B))
+    bs = [len(b) for b in ixs]
+    N = groups.shape[0]
+    K = np.unique(groups).shape[0]
+    assert bs == [B] * (N // B) + [] if N % B == 0 else [N % B]
+    ixs_flat = [i for b in ixs for i in b]
+    assert len(set(ixs_flat)) == K
+    assert min(ixs_flat) >= 0
+    assert max(ixs_flat) < K
+    assert set(folds.counts.keys()) == set(np.unique(groups))
     assert sum(folds.counts.values()) == N
