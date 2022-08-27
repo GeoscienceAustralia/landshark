@@ -60,21 +60,20 @@ class KFolds:
         return _batch_randn(1, self.K + 1, self.N, batch_size, self.seed)
 
 
-def _batch_group_randn(indices: np.ndarray, batch_size: int, seed: int) -> Iterator[np.ndarray]:
+def _batch_group_randn(indices: np.ndarray, size: int, batch_size: int, seed: int) -> Iterator[np.ndarray]:
     rnd = np.random.RandomState(seed)
     total_n = 0
-    size = indices.shape[0]
     while total_n < size:
         batch_start = total_n
         batch_end = min(total_n + batch_size, size)
         batch_n = batch_end - batch_start
-        vals = rnd.choice(indices, size=(batch_n), replace=False)
+        vals = rnd.choice(indices, size=(batch_n), replace=True)
         yield vals
         total_n += batch_n
     return
 
 
-class GroupKFold:
+class GroupKFolds:
     def __init__(self, groups: np.ndarray, seed: int = 666) -> None:
         """Low-ish memory group k-fold cross validation indices generator.
 
@@ -84,10 +83,10 @@ class GroupKFold:
         """
         self.N = groups.shape[0]
         self.seed = seed
-        indices, self.group_indices, counts = np.unique(groups, return_inverse=True, return_counts=True)
-        self.K = indices.shape[0]
-        self.counts = {k: c for k, c in zip(indices, counts)}
+        self.indices, self.group_indices, counts = np.unique(groups, return_inverse=True, return_counts=True)
+        self.K = self.indices.shape[0]
+        self.counts = {k: c for k, c in zip(self.indices, counts)}
 
     def iterator(self, batch_size: int) -> Iterator[np.ndarray]:
         """Return an iterator of fold index batches."""
-        return _batch_group_randn(self.group_indices, batch_size, self.seed)
+        return _batch_group_randn(self.indices, self.N, batch_size, self.seed)
