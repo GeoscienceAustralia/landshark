@@ -211,7 +211,7 @@ class ContinuousArraySource(ArraySource):
     _missing_val = np.finfo(_dtype).min
 
 
-class CategoricalArraySource(ArraySource):
+class  CategoricalArraySource(ArraySource):
     """Array source for categorical data."""
 
     _dtype = CategoricalType

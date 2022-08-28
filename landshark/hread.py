@@ -88,6 +88,12 @@ class CategoricalH5ArraySource(H5ArraySource, CategoricalArraySource):
     _array_name = "categorical_data"
 
 
+class GroupsH5ArraySource(H5ArraySource, CategoricalArraySource):
+    """HDF5 array source for groups data."""
+
+    _array_name = "groups_data"
+
+
 class H5Features:
     """Note unlike the array classes this isn't picklable."""
 

@@ -175,6 +175,21 @@ class CategoricalTarget(PickleObj):
         self.labels = labels
 
 
+class GroupDataTarget(CategoricalTarget):
+
+    _filename = "GROUPDATATARGET.bin"
+
+    def __init__(
+            self,
+            N: int,
+            labels: np.ndarray,
+            nvalues: np.ndarray,
+            mappings: List[np.ndarray],
+            counts: List[np.ndarray],
+    ) -> None:
+        super().__init__(N, labels, nvalues, mappings, counts)
+
+
 class ContinuousTarget(PickleObj):
 
     _filename = "CONTINUOUSTARGET.bin"
@@ -191,7 +206,7 @@ class ContinuousTarget(PickleObj):
         self.labels = labels
 
 
-Target = Union[ContinuousTarget, CategoricalTarget]
+Target = Union[ContinuousTarget, CategoricalTarget, GroupDataTarget]
 
 
 class Training(PickleObj):

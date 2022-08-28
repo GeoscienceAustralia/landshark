@@ -34,6 +34,7 @@ from landshark.iteration import batch_slices, with_slices
 from landshark.metadata import (
     CategoricalFeatureSet,
     CategoricalTarget,
+    GroupDataTarget,
     ContinuousFeatureSet,
     ContinuousTarget,
     FeatureSet,
@@ -75,6 +76,8 @@ def read_feature_metadata(path: str) -> FeatureSet:
 def write_target_metadata(meta: Target, hfile: tables.File) -> None:
     if isinstance(meta, ContinuousTarget):
         _write_continuous_target_metadata(meta, hfile)
+    elif isinstance(meta, GroupDataTarget):
+        _write_groups_data_metadata(meta, hfile)
     elif isinstance(meta, CategoricalTarget):
         _write_categorical_target_metadata(meta, hfile)
     else:
@@ -88,6 +91,15 @@ def read_target_metadata(path: str) -> Target:
             return continuous
         elif hasattr(hfile.root, "categorical_data"):
             categorical = _read_categorical_target_metadata(hfile)
+            return categorical
+        else:
+            raise RuntimeError("Can't find Metadata")
+
+
+def read_groups_data_metadata(path: str) -> Target:
+    with tables.open_file(path, "r") as hfile:
+        if hasattr(hfile.root, "groups_data"):
+            categorical = _read_groups_data_metadata(hfile)
             return categorical
         else:
             raise RuntimeError("Can't find Metadata")
@@ -133,7 +145,7 @@ def _write_continuous_target_metadata(
 def _read_continuous_target_metadata(hfile: tables.File) -> ContinuousTarget:
     normalised = hfile.root.continuous_data.attrs.normalised
     N = hfile.root.continuous_data.attrs.N
-    labels = [k.decode() for k in hfile.root.continuous_labels.read()]
+    labels = np.array([k.decode() for k in hfile.root.continuous_labels.read()])
     means, sds = None, None
     if normalised:
         means = hfile.root.continuous_means.read()
@@ -178,6 +190,26 @@ def _write_categorical_target_metadata(
     _make_int_vlarray(hfile, "categorical_counts", meta.counts)
     _make_int_vlarray(hfile, "categorical_mappings", meta.mappings)
     hfile.create_array(hfile.root, name="categorical_nvalues", obj=meta.nvalues)
+
+
+def _write_groups_data_metadata(meta: GroupDataTarget, hfile: tables.File) -> None:
+    hfile.root.groups_data.attrs.D = meta.D
+    hfile.root.groups_data.attrs.N = meta.N
+    _make_str_vlarray(hfile, "groups_data_labels", meta.labels)
+    _make_int_vlarray(hfile, "groups_data_counts", meta.counts)
+    _make_int_vlarray(hfile, "groups_data_mappings", meta.mappings)
+    hfile.create_array(hfile.root, name="groups_data_nvalues", obj=meta.nvalues)
+
+
+def _read_groups_data_metadata(hfile: tables.File) -> GroupDataTarget:
+    N = hfile.root.groups_data.attrs.N
+    labels = [k.decode() for k in hfile.root.groups_data_labels.read()]
+    mappings = hfile.root.groups_data_mappings.read()
+    counts = hfile.root.groups_data_counts.read()
+    nvalues = hfile.root.groups_data_nvalues.read()
+
+    meta = GroupDataTarget(N, labels, nvalues, mappings, counts)
+    return meta
 
 
 def _read_categorical_target_metadata(hfile: tables.File) -> CategoricalTarget:
@@ -231,6 +263,7 @@ def write_categorical(
     n_workers: int,
     batchrows: Optional[int] = None,
     maps: Optional[np.ndarray] = None,
+    name: str = "categorical_data",
 ) -> None:
     transform = CategoryMapper(maps, source.missing) if maps else IdWorker()
     n_workers = n_workers if maps else 0
@@ -238,7 +271,7 @@ def write_categorical(
         source,
         hfile,
         tables.Int32Atom(source.shape[-1]),
-        "categorical_data",
+        name,
         transform,
         n_workers,
         batchrows,

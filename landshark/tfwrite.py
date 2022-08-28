@@ -42,7 +42,7 @@ def training(
     output_directory: str,
     testfold: int,
     folds: Iterator[np.ndarray],
-    tag: str="train"
+    tag: str="train",
 ) -> None:
     """Write training data to tfrecord."""
     test_directory = os.path.join(output_directory, "testing")

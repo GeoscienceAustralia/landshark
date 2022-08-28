@@ -31,10 +31,10 @@ from landshark.dataprocess import (
     write_trainingdata,
     write_training_validation_data,
 )
-from landshark.featurewrite import read_feature_metadata, read_target_metadata
-from landshark.hread import CategoricalH5ArraySource, ContinuousH5ArraySource
+from landshark.featurewrite import read_feature_metadata, read_target_metadata, read_groups_data_metadata
+from landshark.hread import CategoricalH5ArraySource, ContinuousH5ArraySource, GroupsH5ArraySource
 from landshark.image import strip_image_spec
-from landshark.kfold import KFolds
+from landshark.kfold import KFolds, GroupKFolds
 from landshark.scripts.logger import configure_logging
 from landshark.util import points_per_batch
 
@@ -85,6 +85,11 @@ def cli(ctx: click.Context, verbosity: str, batch_mb: float, nworkers: int) -> i
     help="Target HDF5 file from which to read",
 )
 @click.option(
+    "--group_kfold",
+    is_flag=True,
+    help="Use group kfold",
+)
+@click.option(
     "--split",
     type=int,
     nargs=2,
@@ -115,6 +120,7 @@ def cli(ctx: click.Context, verbosity: str, batch_mb: float, nworkers: int) -> i
 def traintest(
     ctx: click.Context,
     targets: str,
+    group_kfold: bool,
     split: Tuple[int, ...],
     random_seed: int,
     name: str,
@@ -126,6 +132,7 @@ def traintest(
     catching_f = errors.catch_and_exit(traintest_entrypoint)
     catching_f(
         targets,
+        group_kfold,
         fold,
         nfolds,
         random_seed,
@@ -139,6 +146,7 @@ def traintest(
 
 def traintest_entrypoint(
     targets: str,
+    group_kfold: bool,
     testfold: int,
     folds: int,
     random_seed: int,
@@ -159,8 +167,16 @@ def traintest_entrypoint(
         else ContinuousH5ArraySource(targets)
     )
 
-    n_rows = len(target_src)
-    kfolds = KFolds(n_rows, folds, random_seed)
+    if group_kfold:
+        group_meta = read_groups_data_metadata(targets)
+        group_src = GroupsH5ArraySource(targets)
+        n_rows = len(group_src)
+        assert testfold in group_meta.mappings[0]
+        assert folds == group_meta.nvalues[0]
+        kfolds = GroupKFolds(groups, random_seed)
+    else:
+        n_rows = len(target_src)
+        kfolds = KFolds(n_rows, folds, random_seed)
 
     directory = os.path.join(
         os.getcwd(), "traintest_{}_fold{}of{}".format(name, testfold, folds)

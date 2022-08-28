@@ -218,6 +218,13 @@ def tifs_entrypoint(
     help="Label of record to extract as a target",
 )
 @click.option(
+    "--group_col",
+    type=str,
+    multiple=False,
+    required=False,
+    help="Group value to extract for each target",
+)
+@click.option(
     "--shapefile",
     type=click.Path(exists=True),
     required=True,
@@ -252,6 +259,7 @@ def targets(
     ctx: click.Context,
     shapefile: str,
     record: Tuple[str, ...],
+    group_col: str,
     name: str,
     every: int,
     dtype: str,
@@ -267,6 +275,7 @@ def targets(
         batchMB,
         shapefile,
         record_list,
+        group_col,
         name,
         every,
         categorical,
@@ -279,6 +288,7 @@ def targets_entrypoint(
     batchMB: float,
     shapefile: str,
     records: List[str],
+    group_col: str,
     name: str,
     every: int,
     categorical: bool,
@@ -295,6 +305,7 @@ def targets_entrypoint(
         cocon_src = CoordinateShpArraySource(shapefile, random_seed)
         cocon_batchsize = mb_to_points(batchMB, ndim_con=0, ndim_cat=0, ndim_coord=2)
         write_coordinates(cocon_src, h5file, cocon_batchsize)
+        write_group_data(batchMB, group_col, nworkers, h5file, random_seed, shapefile)
 
         if categorical:
             log.info("Reading shapefile categorical records")
@@ -327,6 +338,22 @@ def targets_entrypoint(
             )
             write_target_metadata(con_meta, h5file)
     log.info("Target import complete")
+
+
+def write_group_data(batchMB, group_col, nworkers, h5file, random_seed, shapefile):
+    group_src = CategoricalShpArraySource(shapefile, [group_col], random_seed)
+    group_batchsize = mb_to_points(batchMB, ndim_con=0, ndim_cat=1, ndim_coord=0)
+    group_data = get_maps(group_src, group_batchsize)
+    gdata_mappings, gdata_counts = group_data.mappings, group_data.counts
+    write_categorical(group_src, h5file, nworkers, group_batchsize, name="groups_data", maps=gdata_mappings)
+    group_data_meta = meta.GroupDataTarget(
+        N=group_src.shape[0],
+        labels=group_src.columns,
+        nvalues=np.array([len(m) for m in gdata_mappings]),
+        mappings=gdata_mappings,
+        counts=gdata_counts
+    )
+    write_target_metadata(group_data_meta, h5file)
 
 
 if __name__ == "__main__":
