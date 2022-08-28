@@ -25,7 +25,7 @@ from landshark.basetypes import (
     CategoricalArraySource,
     ContinuousArraySource,
 )
-from landshark.featurewrite import read_feature_metadata, read_target_metadata
+from landshark.featurewrite import read_feature_metadata, read_target_metadata, read_groups_data_metadata
 
 
 class H5ArraySource(ArraySource):
@@ -116,6 +116,30 @@ class H5Features:
             self._n = len(self.categorical)
         if self.continuous and self.categorical:
             assert len(self.continuous) == len(self.categorical)
+
+    def __len__(self) -> int:
+        return self._n
+
+    def __del__(self) -> None:
+        self._hfile.close()
+
+
+class H5TargetGroupShape:
+    """
+    HDF5 source for groups data
+    Note unlike the array classes this isn't picklable.
+    """
+
+    def __init__(self, h5file: str) -> None:
+
+        self.metadata = read_groups_data_metadata(h5file)
+        self._hfile = tables.open_file(h5file, "r")
+        self._n = self.metadata.N
+
+        if hasattr(self._hfile.root, "groups_data"):
+            mapped_groups = np.array(self._hfile.root.groups_data.read(), dtype=int)
+
+        self.groups = self.metadata.mappings[0][mapped_groups]
 
     def __len__(self) -> int:
         return self._n

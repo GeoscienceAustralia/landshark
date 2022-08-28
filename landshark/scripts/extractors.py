@@ -32,7 +32,7 @@ from landshark.dataprocess import (
     write_training_validation_data,
 )
 from landshark.featurewrite import read_feature_metadata, read_target_metadata, read_groups_data_metadata
-from landshark.hread import CategoricalH5ArraySource, ContinuousH5ArraySource, GroupsH5ArraySource
+from landshark.hread import CategoricalH5ArraySource, ContinuousH5ArraySource, GroupsH5ArraySource, H5TargetGroupShape
 from landshark.image import strip_image_spec
 from landshark.kfold import KFolds, GroupKFolds
 from landshark.scripts.logger import configure_logging
@@ -173,7 +173,8 @@ def traintest_entrypoint(
         n_rows = len(group_src)
         assert testfold in group_meta.mappings[0]
         assert folds == group_meta.nvalues[0]
-        kfolds = GroupKFolds(groups, random_seed)
+        target_groups = H5TargetGroupShape(targets)
+        kfolds = GroupKFolds(target_groups.groups, random_seed)
     else:
         n_rows = len(target_src)
         kfolds = KFolds(n_rows, folds, random_seed)

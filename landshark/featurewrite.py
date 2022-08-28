@@ -99,8 +99,8 @@ def read_target_metadata(path: str) -> Target:
 def read_groups_data_metadata(path: str) -> Target:
     with tables.open_file(path, "r") as hfile:
         if hasattr(hfile.root, "groups_data"):
-            categorical = _read_groups_data_metadata(hfile)
-            return categorical
+            groups = _read_groups_data_metadata(hfile)
+            return groups
         else:
             raise RuntimeError("Can't find Metadata")
 
