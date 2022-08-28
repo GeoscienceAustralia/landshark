@@ -138,6 +138,8 @@ class H5TargetGroupShape:
 
         if hasattr(self._hfile.root, "groups_data"):
             mapped_groups = np.array(self._hfile.root.groups_data.read(), dtype=int)
+        else:
+            raise RuntimeError(f"Can't find required groups_data section in {h5file}")
 
         self.groups = self.metadata.mappings[0][mapped_groups]
 

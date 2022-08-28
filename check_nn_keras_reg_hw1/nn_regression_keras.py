@@ -27,8 +27,11 @@ from landshark.kerasmodel import (
 )
 from landshark.metadata import Training
 
+
 def r2(y_true, y_pred):
     """Coefficient of determination metric."""
+    # print('='*50, tf.print(y_true[:5, 0]))
+    # print(tf.print(y_pred[:5, 0]))
     SS_res = tf.reduce_sum(tf.math.squared_difference(y_true, y_pred))
     SS_tot = tf.reduce_sum(tf.math.squared_difference(y_true, tf.reduce_mean(y_true)))
     return 1 - SS_res / SS_tot
@@ -65,7 +68,6 @@ def model(
     model_inputs = get_feat_input_list(num_feats, cat_feats)
     model = tf.keras.Model(inputs=model_inputs, outputs=ys)
     optimizer = tf.keras.optimizers.Adam()
-    mse_loss = tf.keras.losses.MeanSquaredError()
-    model.compile(loss=mse_loss, optimizer=optimizer, metrics=[r2])
+    model.compile(loss="mean_squared_error", optimizer=optimizer, metrics=[r2])
     model.summary()
     return model

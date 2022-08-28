@@ -14,11 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 from typing import Iterator
 
 import numpy as np
 
 BATCH_SIZE = 10000
+log = logging.getLogger(__name__)
 
 
 def _batch_randn(
@@ -45,6 +47,7 @@ class KFolds:
             K (int, optional): Defaults to 10. Number of folds.
             seed (int, optional): Defaults to 666. Random seed.
         """
+        log.info(f"==========Using {self.__class__.__name__} to split data==========")
         self.K = K
         self.N = N
         self.seed = seed
@@ -61,13 +64,12 @@ class KFolds:
 
 
 def _batch_group_randn(indices: np.ndarray, size: int, batch_size: int, seed: int) -> Iterator[np.ndarray]:
-    rnd = np.random.RandomState(seed)
     total_n = 0
     while total_n < size:
         batch_start = total_n
         batch_end = min(total_n + batch_size, size)
         batch_n = batch_end - batch_start
-        vals = rnd.choice(indices, size=(batch_n), replace=True)
+        vals = indices[batch_start: batch_end]
         yield vals
         total_n += batch_n
     return
@@ -81,12 +83,14 @@ class GroupKFolds:
             groups (int): numpy array representing groups same size as the number of samples
             seed (int, optional): Defaults to 666. Random seed.
         """
+        log.info(f"==========Using {self.__class__.__name__} to split data==========")
         self.N = groups.shape[0]
         self.seed = seed
-        self.indices, self.group_indices, counts = np.unique(groups, return_inverse=True, return_counts=True)
+        self.indices, counts = np.unique(groups, return_counts=True)
         self.K = self.indices.shape[0]
         self.counts = {k: c for k, c in zip(self.indices, counts)}
+        self.groups = groups
 
     def iterator(self, batch_size: int) -> Iterator[np.ndarray]:
         """Return an iterator of fold index batches."""
-        return _batch_group_randn(self.indices, self.N, batch_size, self.seed)
+        return _batch_group_randn(self.groups, self.N, batch_size, self.seed)
