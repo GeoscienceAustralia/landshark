@@ -170,11 +170,10 @@ def traintest_entrypoint(
     if group_kfold:
         group_meta = read_groups_data_metadata(targets)
         group_src = GroupsH5ArraySource(targets)
-        n_rows = len(group_src)
-        assert testfold in group_meta.mappings[0]
-        assert folds == group_meta.nvalues[0]
+        assert testfold <= folds
+        assert folds <= group_meta.N
         target_groups = H5TargetGroupShape(targets)
-        kfolds = GroupKFolds(target_groups.groups, random_seed)
+        kfolds = GroupKFolds(target_groups.groups, folds, random_seed)
     else:
         n_rows = len(target_src)
         kfolds = KFolds(n_rows, folds, random_seed)

@@ -27,10 +27,9 @@ from landshark.kerasmodel import (
 )
 from landshark.metadata import Training
 
-
 def r2(y_true, y_pred):
     """Coefficient of determination metric."""
-    # print('='*50, tf.print(y_true[:5, 0]))
+    print('='*50, tf.print(y_true[:6, 0]))
     # print(tf.print(y_pred[:5, 0]))
     SS_res = tf.reduce_sum(tf.math.squared_difference(y_true, y_pred))
     SS_tot = tf.reduce_sum(tf.math.squared_difference(y_true, tf.reduce_mean(y_true)))

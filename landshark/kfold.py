@@ -18,6 +18,7 @@ import logging
 from typing import Iterator
 
 import numpy as np
+from sklearn.model_selection import KFold
 
 BATCH_SIZE = 10000
 log = logging.getLogger(__name__)
@@ -63,20 +64,20 @@ class KFolds:
         return _batch_randn(1, self.K + 1, self.N, batch_size, self.seed)
 
 
-def _batch_group_randn(indices: np.ndarray, size: int, batch_size: int, seed: int) -> Iterator[np.ndarray]:
+def _batch_group_randn(indices: np.ndarray, encoding: np.ndarray, size: int, batch_size: int, seed: int) -> Iterator[np.ndarray]:
     total_n = 0
     while total_n < size:
         batch_start = total_n
         batch_end = min(total_n + batch_size, size)
         batch_n = batch_end - batch_start
-        vals = indices[batch_start: batch_end]
-        yield vals
+        vals = encoding[indices[batch_start: batch_end]]
+        yield vals + 1  # + 1 because in landshark we start the groups with index 1
         total_n += batch_n
     return
 
 
 class GroupKFolds:
-    def __init__(self, groups: np.ndarray, seed: int = 666) -> None:
+    def __init__(self, groups: np.ndarray, K: int = 5, seed: int = 666) -> None:
         """Low-ish memory group k-fold cross validation indices generator.
 
         Args:
@@ -86,11 +87,18 @@ class GroupKFolds:
         log.info(f"==========Using {self.__class__.__name__} to split data==========")
         self.N = groups.shape[0]
         self.seed = seed
-        self.indices, counts = np.unique(groups, return_counts=True)
-        self.K = self.indices.shape[0]
-        self.counts = {k: c for k, c in zip(self.indices, counts)}
-        self.groups = groups
+        unique_groups, unique_inverse, counts = np.unique(groups, return_inverse=True, return_counts=True)
+        self.K = K
+        gkfold = KFold(n_splits=K, random_state=seed, shuffle=True)
+        self.encoding = np.zeros_like(unique_groups, dtype=int)
+
+        for i, (tr, te) in enumerate(gkfold.split(unique_groups)):
+            self.encoding[te] = i
+        self.counts = {k: 0 for k in range(1, K + 1)}
+        for k, c in zip(self.encoding, counts):
+            self.counts[k+1] += c
+        self.unique_inverse = unique_inverse
 
     def iterator(self, batch_size: int) -> Iterator[np.ndarray]:
         """Return an iterator of fold index batches."""
-        return _batch_group_randn(self.groups, self.N, batch_size, self.seed)
+        return _batch_group_randn(self.unique_inverse, self.encoding, self.N, batch_size, self.seed)
