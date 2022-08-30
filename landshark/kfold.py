@@ -71,7 +71,7 @@ def _batch_group_randn(indices: np.ndarray, encoding: np.ndarray, size: int, bat
         batch_end = min(total_n + batch_size, size)
         batch_n = batch_end - batch_start
         vals = encoding[indices[batch_start: batch_end]]
-        yield vals + 1  # + 1 because in landshark we start the groups with index 1
+        yield vals
         total_n += batch_n
     return
 
@@ -88,15 +88,23 @@ class GroupKFolds:
         self.N = groups.shape[0]
         self.seed = seed
         unique_groups, unique_inverse, counts = np.unique(groups, return_inverse=True, return_counts=True)
+        original_groups = {u:c for u, c in zip(unique_groups, counts)}
+        log.info(f"original groups and counts {original_groups}")
         self.K = K
         gkfold = KFold(n_splits=K, random_state=seed, shuffle=True)
         self.encoding = np.zeros_like(unique_groups, dtype=int)
 
         for i, (tr, te) in enumerate(gkfold.split(unique_groups)):
-            self.encoding[te] = i
+            log.info(f"Input groups {unique_groups[te]} is assigned to group {i+1}")
+            self.encoding[te] = i + 1
+        log.info(f"Original groups are {list(original_groups.keys())}")
+        log.info(f"Original groups are mapped as {self.encoding}")
+
         self.counts = {k: 0 for k in range(1, K + 1)}
         for k, c in zip(self.encoding, counts):
-            self.counts[k+1] += c
+            self.counts[k] += c
+        assert sum(self.counts.values()) == self.N
+        log.info(f"GroupKFold counts {self.counts}")
         self.unique_inverse = unique_inverse
 
     def iterator(self, batch_size: int) -> Iterator[np.ndarray]:

@@ -85,8 +85,9 @@ def cli(ctx: click.Context, verbosity: str, batch_mb: float, nworkers: int) -> i
     help="Target HDF5 file from which to read",
 )
 @click.option(
-    "--group_kfold",
+    "--kfold/--group_kfold",
     is_flag=True,
+    default=True,
     help="Use group kfold",
 )
 @click.option(
@@ -120,7 +121,7 @@ def cli(ctx: click.Context, verbosity: str, batch_mb: float, nworkers: int) -> i
 def traintest(
     ctx: click.Context,
     targets: str,
-    group_kfold: bool,
+    kfold: bool,
     split: Tuple[int, ...],
     random_seed: int,
     name: str,
@@ -132,7 +133,7 @@ def traintest(
     catching_f = errors.catch_and_exit(traintest_entrypoint)
     catching_f(
         targets,
-        group_kfold,
+        kfold,
         fold,
         nfolds,
         random_seed,
@@ -146,7 +147,7 @@ def traintest(
 
 def traintest_entrypoint(
     targets: str,
-    group_kfold: bool,
+    kfold: bool,
     testfold: int,
     folds: int,
     random_seed: int,
@@ -166,8 +167,7 @@ def traintest_entrypoint(
         if isinstance(target_metadata, meta.CategoricalTarget)
         else ContinuousH5ArraySource(targets)
     )
-
-    if group_kfold:
+    if not kfold:
         group_meta = read_groups_data_metadata(targets)
         group_src = GroupsH5ArraySource(targets)
         assert testfold <= folds

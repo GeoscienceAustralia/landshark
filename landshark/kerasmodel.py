@@ -300,7 +300,7 @@ def train_test(
     callbacks = [
         tf.keras.callbacks.TensorBoard(directory),
         tf.keras.callbacks.ModelCheckpoint(str(weights_file), save_best_only=True),
-        tf.keras.callbacks.EarlyStopping(patience=50),
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, mode="min", verbose=1),
         UpdateCallback(params.epochs, iterations),
         tf.keras.callbacks.CSVLogger(str(scores_files), separator=',', append=False)
     ]
