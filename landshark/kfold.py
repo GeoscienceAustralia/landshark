@@ -48,7 +48,7 @@ class KFolds:
             K (int, optional): Defaults to 10. Number of folds.
             seed (int, optional): Defaults to 666. Random seed.
         """
-        log.info(f"==========Using {self.__class__.__name__} to split data==========")
+        log.info(f"=======Using {self.__class__.__name__} to split data into {K} folds =======")
         self.K = K
         self.N = N
         self.seed = seed
@@ -84,7 +84,7 @@ class GroupKFolds:
             groups (int): numpy array representing groups same size as the number of samples
             seed (int, optional): Defaults to 666. Random seed.
         """
-        log.info(f"==========Using {self.__class__.__name__} to split data==========")
+        log.info(f"=======Using {self.__class__.__name__} to split groups into {K} folds =======")
         self.N = groups.shape[0]
         self.seed = seed
         unique_groups, unique_inverse, counts = np.unique(groups, return_inverse=True, return_counts=True)
