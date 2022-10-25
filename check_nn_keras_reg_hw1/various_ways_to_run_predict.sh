@@ -29,3 +29,7 @@
 #  --config nn_regression_keras.py \
 #  --checkpoint nn_regression_keras_model_1of10 \
 #  --data query_sirsam_strip5of10
+
+
+# parallel -u --link  --dryrun echo {1} {2} ">" {1}.log ::: bird flower fist ::: red green blue
+# parallel -u --link  echo {1} {2} ">" {1}.log ::: bird flower fist ::: red green blue

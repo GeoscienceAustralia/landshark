@@ -1,11 +1,28 @@
 import math
 from subprocess import run
+from typing import NamedTuple
 from optparse import OptionParser
 from pathlib import Path
 import pandas as pd
 
 
-def method_name(name, total_folds, config_name, halfwidth):
+class Config(NamedTuple):
+    name: str
+    epochs: int
+    batchsize: int
+    halfwidth: int
+    config_name: str
+    total_folds: int
+    config: str
+
+
+def work_it(opt: Config):
+    name = opt.name
+    total_folds = opt.total_folds
+    config_name = opt.config
+    halfwidth = opt.halfwidth
+    epochs = opt.epochs
+    batchsize = opt.batchsize
     num_interations = []
     val_fold_r2s = []
     config_fname = Path(config_name).stem
@@ -40,30 +57,33 @@ def method_name(name, total_folds, config_name, halfwidth):
 
 
 if __name__ == '__main__':
-    epochs = 10
-    batchsize = 100
-    iterations = 500
-    total_folds = 5
-    config = "./nn_regression_keras.py"
-    name = "sirsam"
 
     parser = OptionParser(usage='%prog -c config_file_name \n'
-                                '-h halfwidth')
-    parser.add_option('-c', '--config', type=str, dest='config',
+                                '-h halfwidth -n name -b batchsize -e epochs -f total_folds \n'
+                                '-i interations -w halfwidth')
+    parser.add_option('-c', '--config', type='string', dest='config',
                       help='name of python config file')
-
-    parser.add_option('-h', '--halfwidth', type=float, dest='halfwidth',
+    parser.add_option('-n', '--name', type='string', dest='name',
+                      help='name')
+    parser.add_option('-b', '--batchsize', type='int', dest='batchsize',
+                      help='batchsize')
+    parser.add_option('-e', '--epochs', type='int', dest='epochs',
+                      help='epochs')
+    parser.add_option('-f', '--total_folds', type='int', dest='total_folds',
+                      help='total_folds')
+    parser.add_option('-i', '--iterations', type='int', dest='iterations',
+                      help='iterations')
+    parser.add_option('-w', '--halfwidth', type='int', dest='halfwidth',
                       default=0,
                       help='Halfwidth of the patch on \n'
                            'either side of the target')
     options, args = parser.parse_args()
-    options.name = name
-    options.total_folds = total_folds
 
     if not options.config:  # if filename is not given
         parser.error('Provide config file')
 
     if not options.halfwidth:  # if filename is not given
         parser.error('Provide halfwidth')
+        options.halfwidth = int(options.halfwidth)
 
-    method_name(options.name, options.total_folds, options.config, options.halfwidth)
+    work_it(options)
