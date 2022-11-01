@@ -29,7 +29,7 @@ clean-hdf:
 	rm -fr features_$(name).hdf5 targets_$(name).hdf5
 
 clean-pred:
-	rm *_pred_parts.sh
+	rm -f *_pred_parts.sh
 
 import-features:
 	landshark-import --nworkers 0 --batch-mb 0.001 tifs \
@@ -42,3 +42,17 @@ import-targets:
     --name ${name} --record group_cat \
     --dtype continuous --group_col group \
     --shapefile ${shape}
+
+#landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
+#  --features features_sirsam.hdf5 \
+#  --split 1 10 \
+#  --targets targets_Na_ppm_i_1.hdf5 \
+#  --name sirsam \
+#  --halfwidth 0
+#
+#landshark --keras-model train \
+#  --trainvalidation false \
+#  --data traintest_sirsam_fold1of10/ \
+#  --config nn_regression_keras_global_local.py  \
+#  --epochs 20 \
+#  --iterations 100
