@@ -205,18 +205,32 @@ def train_entrypoint(
     required=True,
     help="Path to the query data directory",
 )
+@click.option(
+    "--proba",
+    type=click.BOOL,
+    required=False,
+    default=False,
+    help="Whether the data folder is a traintes or trainvalidation folder",
+)
 @click.pass_context
-def run_predict(ctx: click.Context, config: str, checkpoint: str, data: str) -> None:
+def run_predict(ctx: click.Context, config: str, checkpoint: str, data: str, proba: bool) -> None:
     """Predict using a learned model."""
     catching_f = errors.catch_and_exit(predict_entrypoint)
-    catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu)
+    catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu, proba)
 
 
 def predict_entrypoint(
-    config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool
+    config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool, proba: bool,
 ) -> None:
     """Entrypoint for predict function."""
-    predict_fn = kerasmodel.predict if keras else predict
+    if keras:
+        if proba:
+            predict_fn = kerasmodel.predict_tfp
+        else:
+            predict_fn = kerasmodel.predict
+    else:
+        predict_fn = predict
+
     train_metadata, feature_metadata, query_records, strip, nstrips, cf = setup_query(
         config, data, checkpoint
     )
