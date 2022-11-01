@@ -374,79 +374,7 @@ def _predict(
     yield predictions
 
 
-def __predict(
-        checkpoint_dir: str,
-        cf: Any,  # Module type
-        metadata: Training,
-        records: List[str],
-        params: QueryConfig,
-) -> Generator:
-    """Load a model and predict results for record inputs."""
-    x = dataset_fn(records, params.batchsize, metadata.features)()
-    inputs = gen_keras_inputs(x, metadata, x_only=True)
-    targets = get_target_data(metadata.targets)
-    x = x.map(flatten_dataset_x)
-
-    model = cf.model(*inputs, targets, metadata)
-
-    weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
-    if weights_file.exists():
-        model.load_weights(str(weights_file))
-
-    for x_it in x:
-        y_it = model(x_it)
-        if not isinstance(y_it, list):
-            y_it = [y_it]
-
-        # d_lst = [dist.mean().numpy() for dist in y_it]
-        d_lst = [dist.stddev().numpy() for dist in y_it]
-        predictions = dict(
-            p for p in zip(model.output_names, d_lst) if p[0].startswith("independent_normal")
-        )
-        yield predictions
-
-
 def predict_tfp(
-        checkpoint_dir: str,
-        cf: Any,  # Module type
-        metadata: Training,
-        records: List[str],
-        params: QueryConfig,
-) -> Generator:
-    """Load a model and predict results for record inputs.
-       The whole input dataset is processed as a SINGLE batch!
-    """
-    x = dataset_fn(records, params.batchsize, metadata.features)()
-    inputs = gen_keras_inputs(x, metadata, x_only=True)
-    targets = get_target_data(metadata.targets)
-    x = x.map(flatten_dataset_x)
-
-    model = cf.model(*inputs, targets, metadata)
-
-    weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
-    if weights_file.exists():
-        model.load_weights(str(weights_file))
-
-    dx = {}
-    for x_it in x:
-        if not dx:
-            dx = x_it
-        else:
-            for _k in dx:
-                dx[_k] = tf.concat((dx.get(_k), x_it.get(_k)), axis=0)
-
-    y = model(dx)
-    if not isinstance(y, list):
-        y = [y]
-    d_lst = [dist.mean().numpy() for dist in y]
-    # d_lst = [dist.stddev().numpy() for dist in y]
-    predictions = dict(
-        p for p in zip(model.output_names, d_lst) if p[0].startswith("independent_normal")
-    )
-    yield predictions
-
-
-def predict(
     checkpoint_dir: str,
     cf: Any,  # Module type
     metadata: Training,
@@ -464,19 +392,6 @@ def predict(
     weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
     if weights_file.exists():
         model.load_weights(str(weights_file))
-
-    # for x_it in x:
-    #     y_it = model(x_it)
-    #     if not isinstance(y_it, list):
-    #         y_it = [y_it]
-    #
-    #     # d_lst = [dist.mean().numpy() for dist in y_it]
-    #     d_lst = [dist.stddev().numpy() for dist in y_it]
-    #     predictions = dict(
-    #         p for p in zip(model.output_names, d_lst) if p[0].startswith("independent_normal")
-    #     )
-    #     yield predictions
-
     for x_it in x:
         preds = []
         for i in range(100):
@@ -494,9 +409,47 @@ def predict(
                 y_it = [y_it]
             preds.append(y_it)
         y_it_mean = [np.vstack(preds).mean(axis=0)]
-        # import IPython; IPython.embed(); import sys; sys.exit()
 
         predictions = dict(
             p for p in zip(model.output_names, y_it_mean) if p[0].startswith("independent_normal")
+        )
+        yield predictions
+
+
+def predict(
+        checkpoint_dir: str,
+        cf: Any,  # Module type
+        metadata: Training,
+        records: List[str],
+        params: QueryConfig,
+) -> Generator:
+    """Load a model and predict results for record inputs."""
+    x = dataset_fn(records, params.batchsize, metadata.features)()
+    inputs = gen_keras_inputs(x, metadata, x_only=True)
+    targets = get_target_data(metadata.targets)
+    x = x.map(flatten_dataset_x)
+
+    model = cf.model(*inputs, targets, metadata)
+
+    weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
+    if weights_file.exists():
+        model.load_weights(str(weights_file))
+
+    for x_it in x:
+        y_it = model.predict(
+            x=x_it,
+            batch_size=None,
+            verbose=0,
+            steps=1,
+            callbacks=None,
+            max_queue_size=10,
+            workers=1,
+            use_multiprocessing=False,
+        )
+        if not isinstance(y_it, list):
+            y_it = [y_it]
+
+        predictions = dict(
+            p for p in zip(model.output_names, y_it) if p[0].startswith("predictions")
         )
         yield predictions
