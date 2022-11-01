@@ -22,7 +22,7 @@ from typing import NamedTuple, Optional
 import click
 
 from landshark import __version__, errors
-from landshark.kerasmodel import predict as keras_predict
+from landshark import kerasmodel
 from landshark.kerasmodel import train_test as keras_train_test
 from landshark.model import (
     QueryConfig,
@@ -216,7 +216,7 @@ def predict_entrypoint(
     config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool
 ) -> None:
     """Entrypoint for predict function."""
-    predict_fn = keras_predict if keras else predict
+    predict_fn = kerasmodel.predict if keras else predict
     train_metadata, feature_metadata, query_records, strip, nstrips, cf = setup_query(
         config, data, checkpoint
     )

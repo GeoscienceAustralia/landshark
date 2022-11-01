@@ -31,7 +31,7 @@ from typing import (
     Tuple,
     Union,
 )
-
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.utils import plot_model
 
@@ -80,7 +80,7 @@ def _impute_const_fn(x: Sequence[tf.Tensor], value: int = 0) -> tf.Tensor:
 
 
 def impute_const_layer(
-    data: tf.keras.Input, mask: Optional[tf.keras.Input], value: int = 0
+        data: tf.keras.Input, mask: Optional[tf.keras.Input], value: int = 0
 ) -> tf.keras.layers.Layer:
     """Create an imputation Layer."""
     if mask is not None:
@@ -92,10 +92,10 @@ def impute_const_layer(
 
 
 def impute_embed_concat_layer(
-    num_feats: List[NumFeatInput],
-    cat_feats: List[CatFeatInput],
-    num_impute_val: int = 0,
-    cat_embed_dims: int = 3,
+        num_feats: List[NumFeatInput],
+        cat_feats: List[CatFeatInput],
+        num_impute_val: int = 0,
+        cat_embed_dims: int = 3,
 ) -> tf.keras.layers.Layer:
     """Impute missing data, embed categorical, and concat inputs together."""
 
@@ -120,7 +120,7 @@ def impute_embed_concat_layer(
 
 
 def get_feat_input_list(
-    num_feats: List[FeatInput], cat_feats: List[FeatInput]
+        num_feats: List[FeatInput], cat_feats: List[FeatInput]
 ) -> List[tf.keras.Input]:
     """Concatenate feature inputs."""
     i_list = [i for fs in (num_feats, cat_feats) for f in fs for i in f.data_mask]
@@ -137,9 +137,9 @@ class KerasInputs(NamedTuple):
 
 
 def gen_keras_inputs(
-    dataset: tf.data.TFRecordDataset,
-    metadata: Training,
-    x_only: bool = False,
+        dataset: tf.data.TFRecordDataset,
+        metadata: Training,
+        x_only: bool = False,
 ) -> KerasInputs:
     """Generate keras.Inputs for each covariate in the dataset."""
     xs = dataset.element_spec if x_only else dataset.element_spec[0]
@@ -149,7 +149,7 @@ def gen_keras_inputs(
         return tf.keras.Input(name=name, shape=data.shape[1:], dtype=data.dtype)
 
     def gen_data_mask_inputs(
-        data: tf.TensorSpec, mask: tf.TensorSpec, name: str
+            data: tf.TensorSpec, mask: tf.TensorSpec, name: str
     ) -> Tuple[tf.keras.Input, tf.keras.Input]:
         """Create keras inputs for data and mask."""
         return gen_keras_input(data, name), gen_keras_input(mask, f"{name}_mask")
@@ -184,7 +184,7 @@ def flatten_dataset_x(x: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def flatten_dataset(
-    x: Dict[str, Any], y: Optional[tf.Tensor] = None
+        x: Dict[str, Any], y: Optional[tf.Tensor] = None
 ) -> Tuple[Dict[str, Any], Optional[Union[tf.Tensor, Tuple[tf.Tensor]]]]:
     """Flatten tf dataset dictionary."""
 
@@ -299,9 +299,12 @@ def train_test(
     # create callbacks for tensorboard, model saving, and early stopping
     callbacks = [
         tf.keras.callbacks.TensorBoard(directory),
-        tf.keras.callbacks.ModelCheckpoint(
-            str(weights_file), save_best_only=True, monitor='val_loss', mode='min', verbose=1
-        ),
+        # tf.keras.callbacks.ModelCheckpoint(
+        #     str(weights_file), save_best_only=True, monitor='val_loss', mode='min', verbose=1
+        # ),
+        tf.keras.callbacks.ModelCheckpoint(str(weights_file),
+                                           save_weights_only=True, save_best_only=True, mode="min",
+                                           verbose=1),
         tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, mode="min", verbose=1),
         UpdateCallback(params.epochs, iterations),
         tf.keras.callbacks.CSVLogger(str(scores_files), separator=',', append=False)
@@ -331,6 +334,118 @@ def train_test(
     return
 
 
+def _predict(
+        checkpoint_dir: str,
+        cf: Any,  # Module type
+        metadata: Training,
+        records: List[str],
+        params: QueryConfig,
+) -> Generator:
+    """Load a model and predict results for record inputs.
+       The whole input dataset is processed as a SINGLE batch!
+    """
+    x = dataset_fn(records, params.batchsize, metadata.features)()
+    inputs = gen_keras_inputs(x, metadata, x_only=True)
+    targets = get_target_data(metadata.targets)
+    x = x.map(flatten_dataset_x)
+
+    model = cf.model(*inputs, targets, metadata)
+
+    weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
+    if weights_file.exists():
+        model.load_weights(str(weights_file))
+
+    dx = {}
+    for x_it in x:
+        if not dx:
+            dx = x_it
+        else:
+            for _k in dx:
+                dx[_k] = tf.concat((dx.get(_k), x_it.get(_k)), axis=0)
+
+    y = model(dx)
+    if not isinstance(y, list):
+        y = [y]
+    d_lst = [dist.mean().numpy() for dist in y]
+    # d_lst = [dist.stddev().numpy() for dist in y]
+    predictions = dict(
+        p for p in zip(model.output_names, d_lst) if p[0].startswith("independent_normal")
+    )
+    yield predictions
+
+
+def __predict(
+        checkpoint_dir: str,
+        cf: Any,  # Module type
+        metadata: Training,
+        records: List[str],
+        params: QueryConfig,
+) -> Generator:
+    """Load a model and predict results for record inputs."""
+    x = dataset_fn(records, params.batchsize, metadata.features)()
+    inputs = gen_keras_inputs(x, metadata, x_only=True)
+    targets = get_target_data(metadata.targets)
+    x = x.map(flatten_dataset_x)
+
+    model = cf.model(*inputs, targets, metadata)
+
+    weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
+    if weights_file.exists():
+        model.load_weights(str(weights_file))
+
+    for x_it in x:
+        y_it = model(x_it)
+        if not isinstance(y_it, list):
+            y_it = [y_it]
+
+        # d_lst = [dist.mean().numpy() for dist in y_it]
+        d_lst = [dist.stddev().numpy() for dist in y_it]
+        predictions = dict(
+            p for p in zip(model.output_names, d_lst) if p[0].startswith("independent_normal")
+        )
+        yield predictions
+
+
+def predict_tfp(
+        checkpoint_dir: str,
+        cf: Any,  # Module type
+        metadata: Training,
+        records: List[str],
+        params: QueryConfig,
+) -> Generator:
+    """Load a model and predict results for record inputs.
+       The whole input dataset is processed as a SINGLE batch!
+    """
+    x = dataset_fn(records, params.batchsize, metadata.features)()
+    inputs = gen_keras_inputs(x, metadata, x_only=True)
+    targets = get_target_data(metadata.targets)
+    x = x.map(flatten_dataset_x)
+
+    model = cf.model(*inputs, targets, metadata)
+
+    weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
+    if weights_file.exists():
+        model.load_weights(str(weights_file))
+
+    dx = {}
+    for x_it in x:
+        if not dx:
+            dx = x_it
+        else:
+            for _k in dx:
+                dx[_k] = tf.concat((dx.get(_k), x_it.get(_k)), axis=0)
+
+    y = model(dx)
+    if not isinstance(y, list):
+        y = [y]
+    d_lst = [dist.mean().numpy() for dist in y]
+    # d_lst = [dist.stddev().numpy() for dist in y]
+    predictions = dict(
+        p for p in zip(model.output_names, d_lst) if p[0].startswith("independent_normal")
+    )
+    yield predictions
+
+
 def predict(
     checkpoint_dir: str,
     cf: Any,  # Module type
@@ -350,21 +465,38 @@ def predict(
     if weights_file.exists():
         model.load_weights(str(weights_file))
 
+    # for x_it in x:
+    #     y_it = model(x_it)
+    #     if not isinstance(y_it, list):
+    #         y_it = [y_it]
+    #
+    #     # d_lst = [dist.mean().numpy() for dist in y_it]
+    #     d_lst = [dist.stddev().numpy() for dist in y_it]
+    #     predictions = dict(
+    #         p for p in zip(model.output_names, d_lst) if p[0].startswith("independent_normal")
+    #     )
+    #     yield predictions
+
     for x_it in x:
-        y_it = model.predict(
-            x=x_it,
-            batch_size=None,
-            verbose=0,
-            steps=1,
-            callbacks=None,
-            max_queue_size=10,
-            workers=1,
-            use_multiprocessing=False,
-        )
-        if not isinstance(y_it, list):
-            y_it = [y_it]
+        preds = []
+        for i in range(100):
+            y_it = model.predict(
+                x=x_it,
+                batch_size=None,
+                verbose=0,
+                steps=1,
+                callbacks=None,
+                max_queue_size=10,
+                workers=1,
+                use_multiprocessing=False,
+            )
+            if not isinstance(y_it, list):
+                y_it = [y_it]
+            preds.append(y_it)
+        y_it_mean = [np.vstack(preds).mean(axis=0)]
+        # import IPython; IPython.embed(); import sys; sys.exit()
 
         predictions = dict(
-            p for p in zip(model.output_names, y_it) if p[0].startswith("predictions")
+            p for p in zip(model.output_names, y_it_mean) if p[0].startswith("independent_normal")
         )
         yield predictions
