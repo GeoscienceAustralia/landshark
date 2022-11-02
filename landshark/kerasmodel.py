@@ -409,9 +409,13 @@ def predict_tfp(
                 y_it = [y_it]
             preds.append(y_it)
         y_it_mean = [np.vstack(preds).mean(axis=0)]
-
+        y_it_std = [np.vstack(preds).std(axis=0)]
+        output_std_names = [n + "_std" for n in model.output_names]
         predictions = dict(
             p for p in zip(model.output_names, y_it_mean) if p[0].startswith("independent_normal")
+        )
+        predictions.update(
+            p for p in zip(output_std_names, y_it_std) if p[0].startswith("independent_normal")
         )
         yield predictions
 
