@@ -210,22 +210,32 @@ def train_entrypoint(
     type=click.BOOL,
     required=False,
     default=False,
-    help="Whether the data folder is a traintes or trainvalidation folder",
+    help="Whether it's a probabilistic model",
+)
+@click.option(
+    "--pred_sample_size",
+    type=click.IntRange(min=10),
+    required=False,
+    default=1000,
+    help="Number of samples for the prediction ensemble",
 )
 @click.pass_context
-def run_predict(ctx: click.Context, config: str, checkpoint: str, data: str, proba: bool) -> None:
+def run_predict(ctx: click.Context, config: str, checkpoint: str, data: str, proba: bool,
+                pred_sample_size: int) -> None:
     """Predict using a learned model."""
     catching_f = errors.catch_and_exit(predict_entrypoint)
-    catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu, proba)
+    catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu, proba, pred_sample_size)
 
 
 def predict_entrypoint(
-    config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool, proba: bool,
+    config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool, proba: bool, pred_sample_size: int
 ) -> None:
     """Entrypoint for predict function."""
     if keras:
         if proba:
-            predict_fn = kerasmodel.predict_tfp
+            from functools import partial
+            log.info(f"Using prediction sample size of {pred_sample_size}")
+            predict_fn = partial(kerasmodel.predict_tfp, pred_sample_size=pred_sample_size)
         else:
             predict_fn = kerasmodel.predict
     else:

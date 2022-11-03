@@ -380,6 +380,7 @@ def predict_tfp(
     metadata: Training,
     records: List[str],
     params: QueryConfig,
+    pred_sample_size: int,
 ) -> Generator:
     """Load a model and predict results for record inputs."""
     x = dataset_fn(records, params.batchsize, metadata.features)()
@@ -392,9 +393,13 @@ def predict_tfp(
     weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
     if weights_file.exists():
         model.load_weights(str(weights_file))
-    for x_it in x:
+    for batch, x_it in enumerate(x):
         preds = []
-        for i in range(100):
+        for i in range(pred_sample_size):
+            if i % 10 == 0:
+                size = x_it[list(x_it.keys())[0]].shape[0]
+                log.debug(f"Predicting batch {batch} of size {size}, "
+                          f"sample {i+1} of {pred_sample_size}")
             y_it = model.predict(
                 x=x_it,
                 batch_size=None,
