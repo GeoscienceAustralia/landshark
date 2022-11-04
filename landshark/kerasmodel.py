@@ -285,7 +285,7 @@ def train_test(
     inputs = gen_keras_inputs(xtrain, metadata)
     targets = get_target_data(metadata.targets)
 
-    model = cf.model(*inputs, targets, metadata, params)
+    model = cf.model(*inputs, targets, metadata, params.batchsize)
     plot_model(model, to_file=Path(directory) / "model.pdf", show_shapes=True, show_layer_names=True, dpi=1024)
 
     weights_file = Path(directory) / "checkpoint_weights.h5"
@@ -381,6 +381,7 @@ def predict_tfp(
     records: List[str],
     params: QueryConfig,
     pred_sample_size: int,
+    batchsize: int
 ) -> Generator:
     """Load a model and predict results for record inputs."""
     x = dataset_fn(records, params.batchsize, metadata.features)()
@@ -388,7 +389,7 @@ def predict_tfp(
     targets = get_target_data(metadata.targets)
     x = x.map(flatten_dataset_x)
 
-    model = cf.model(*inputs, targets, metadata)
+    model = cf.model(*inputs, targets, metadata, batchsize)
 
     weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
     if weights_file.exists():

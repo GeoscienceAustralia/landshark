@@ -219,23 +219,33 @@ def train_entrypoint(
     default=1000,
     help="Number of samples for the prediction ensemble",
 )
+@click.option(
+    "--batchsize",
+    type=click.IntRange(min=100),
+    required=False,
+    default=10000,
+    help="Batch size used in tensorflow probability model training",
+)
 @click.pass_context
 def run_predict(ctx: click.Context, config: str, checkpoint: str, data: str, proba: bool,
-                pred_sample_size: int) -> None:
+                pred_sample_size: int, batchsize: int) -> None:
     """Predict using a learned model."""
     catching_f = errors.catch_and_exit(predict_entrypoint)
-    catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu, proba, pred_sample_size)
+    catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu, proba,
+               pred_sample_size, batchsize)
 
 
 def predict_entrypoint(
-    config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool, proba: bool, pred_sample_size: int
+    config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool, proba: bool,
+    pred_sample_size: int, batchsize: int
 ) -> None:
     """Entrypoint for predict function."""
     if keras:
         if proba:
             from functools import partial
             log.info(f"Using prediction sample size of {pred_sample_size}")
-            predict_fn = partial(kerasmodel.predict_tfp, pred_sample_size=pred_sample_size)
+            predict_fn = partial(kerasmodel.predict_tfp, pred_sample_size=pred_sample_size,
+                                 batchsize=batchsize)
         else:
             predict_fn = kerasmodel.predict
     else:
@@ -245,9 +255,9 @@ def predict_entrypoint(
         config, data, checkpoint
     )
 
-    batchsize = points_per_batch(train_metadata.features, batchMB)
+    query_batchsize = points_per_batch(train_metadata.features, batchMB)
 
-    params = QueryConfig(batchsize, gpu)
+    params = QueryConfig(query_batchsize, gpu)
     y_dash_it = predict_fn(
         checkpoint, sys.modules[cf], train_metadata, query_records, params
     )
