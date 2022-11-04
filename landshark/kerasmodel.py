@@ -285,7 +285,7 @@ def train_test(
     inputs = gen_keras_inputs(xtrain, metadata)
     targets = get_target_data(metadata.targets)
 
-    model = cf.model(*inputs, targets, metadata)
+    model = cf.model(*inputs, targets, metadata, params)
     plot_model(model, to_file=Path(directory) / "model.pdf", show_shapes=True, show_layer_names=True, dpi=1024)
 
     weights_file = Path(directory) / "checkpoint_weights.h5"
