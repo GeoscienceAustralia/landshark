@@ -307,7 +307,7 @@ def train_test(
                                            verbose=1),
         tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, mode="min", verbose=1),
         UpdateCallback(params.epochs, iterations),
-        tf.keras.callbacks.CSVLogger(str(scores_files), separator=',', append=False)
+        tf.keras.callbacks.CSVLogger(str(scores_files), separator=',', append=True)
     ]
     log.debug(f"number of batches/evaluations before test set evaluation {len(list(xtrain))}")
     log.debug(f"batch sizes of training data {[x[1].shape[0] for x in list(xtrain)]}")
