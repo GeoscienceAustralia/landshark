@@ -15,16 +15,36 @@ landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
   --split 1 10 \
   --targets targets_sirsam.hdf5 \
   --name sirsam \
-  --halfwidth 0
+  --halfwidth 1
 
 
-# proba = True
+## proba = True
+landshark --keras-model train \
+  --trainvalidation false \
+  --data traintest_sirsam_fold1of10/ \
+  --config nn_regression_keras_global_local.py  \
+  --epochs 10 --batchsize 153 --iterations 10
+#
+landshark-extract --batch-mb 0.01 query \
+    --features features_sirsam.hdf5 \
+    --strip 5 200 \
+    --name sirsam \
+    --halfwidth 1
+
+landshark -v DEBUG --keras-model --batch-mb 0.001 predict \
+    --proba true \
+    --config nn_regression_keras_global_local.py \
+    --checkpoint nn_regression_keras_global_local_model_1of10 \
+    --data query_sirsam_strip5of200 \
+    --pred_ensemble_size 12
+
+# non-proba
 #landshark --keras-model train \
 #  --trainvalidation false \
 #  --data traintest_sirsam_fold1of10/ \
-#  --config nn_regression_keras_global_local.py  \
+#  --config nn_regression_keras.py  \
 #  --epochs 10 \
-#  --iterations 10
+#  --iterations 53 --batchsize 100
 #
 #landshark-extract --batch-mb 0.01 query \
 #    --features features_sirsam.hdf5 \
@@ -33,28 +53,7 @@ landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
 #    --halfwidth 0
 #
 #landshark --keras-model --batch-mb 0.01 predict \
-#    --proba true \
-#    --config nn_regression_keras_global_local.py \
-#    --checkpoint nn_regression_keras_global_local_model_1of10 \
+#    --proba false \
+#    --config nn_regression_keras.py \
+#    --checkpoint nn_regression_keras_model_1of10 \
 #    --data query_sirsam_strip5of200
-
-
-# non-proba
-landshark --keras-model train \
-  --trainvalidation false \
-  --data traintest_sirsam_fold1of10/ \
-  --config nn_regression_keras.py  \
-  --epochs 10 \
-  --iterations 10
-
-landshark-extract --batch-mb 0.01 query \
-    --features features_sirsam.hdf5 \
-    --strip 5 200 \
-    --name sirsam \
-    --halfwidth 0
-
-landshark --keras-model --batch-mb 0.01 predict \
-    --proba false \
-    --config nn_regression_keras.py \
-    --checkpoint nn_regression_keras_model_1of10 \
-    --data query_sirsam_strip5of200
