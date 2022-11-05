@@ -25,7 +25,7 @@ from typing import Any, Dict, Generator, List, NamedTuple, Optional, Tuple
 import numpy as np
 import tensorflow as tf
 
-from landshark.metadata import FeatureSet, Training
+from landshark.metadata import FeatureSet, Training, PickleObj
 from landshark.saver import BestScoreSaver
 from landshark.tfread import dataset_fn, get_query_meta, get_training_meta
 
@@ -37,12 +37,21 @@ signal.signal(signal.SIGINT, signal.default_int_handler)
 # Module constants and types
 #
 
+class TrainingConfig(PickleObj):
 
-class TrainingConfig(NamedTuple):
-    epochs: int
-    batchsize: int
-    test_batchsize: int
-    use_gpu: bool
+    _filename = "TraingConfig.bin"
+
+    def __init__(
+            self,
+            epochs: int,
+            batchsize: int,
+            test_batchsize: int,
+            use_gpu: bool,
+    ) -> None:
+        self.epochs = epochs
+        self.batchsize = batchsize
+        self.test_batchsize = test_batchsize
+        self.use_gpu = use_gpu
 
 
 class QueryConfig(NamedTuple):

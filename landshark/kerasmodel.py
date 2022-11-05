@@ -266,26 +266,26 @@ def train_test(
     metadata: Training,
     directory: str,
     cf: Any,  # Module type
-    params: TrainingConfig,
+    training_config: TrainingConfig,
     iterations: Optional[int],
 ) -> None:
     """Model training and periodic hold-out testing."""
     xtrain = dataset_fn(
         records_train,
-        params.batchsize,
+        training_config.batchsize,
         metadata.features,
         metadata.targets,
-        params.epochs,
+        training_config.epochs,
         shuffle=True,
     )()
     xtest = dataset_fn(
-        records_test, params.test_batchsize, metadata.features, metadata.targets
+        records_test, training_config.test_batchsize, metadata.features, metadata.targets
     )()
 
     inputs = gen_keras_inputs(xtrain, metadata)
     targets = get_target_data(metadata.targets)
 
-    model = cf.model(*inputs, targets, metadata, params.batchsize)
+    model = cf.model(*inputs, targets, metadata, training_config)
     plot_model(model, to_file=Path(directory) / "model.pdf", show_shapes=True, show_layer_names=True, dpi=1024)
 
     weights_file = Path(directory) / "checkpoint_weights.h5"
@@ -306,7 +306,7 @@ def train_test(
                                            save_weights_only=True, save_best_only=True, mode="min",
                                            verbose=1),
         tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, mode="min", verbose=1),
-        UpdateCallback(params.epochs, iterations),
+        UpdateCallback(training_config.epochs, iterations),
         tf.keras.callbacks.CSVLogger(str(scores_files), separator=',', append=True)
     ]
     log.debug(f"number of batches/evaluations before test set evaluation {len(list(xtrain))}")
@@ -380,27 +380,26 @@ def predict_tfp(
     metadata: Training,
     records: List[str],
     params: QueryConfig,
-    pred_sample_size: int,
-    batchsize: int
+    pred_ensemble_size: int,
+    training_config: TrainingConfig
 ) -> Generator:
     """Load a model and predict results for record inputs."""
     x = dataset_fn(records, params.batchsize, metadata.features)()
     inputs = gen_keras_inputs(x, metadata, x_only=True)
     targets = get_target_data(metadata.targets)
     x = x.map(flatten_dataset_x)
-
-    model = cf.model(*inputs, targets, metadata, batchsize)
+    model = cf.model(*inputs, targets, metadata, training_config)
 
     weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
     if weights_file.exists():
         model.load_weights(str(weights_file))
     for batch, x_it in enumerate(x):
         preds = []
-        for i in range(pred_sample_size):
+        for i in range(pred_ensemble_size):
             if i % 10 == 0:
                 size = x_it[list(x_it.keys())[0]].shape[0]
                 log.debug(f"Predicting batch {batch} of size {size}, "
-                          f"sample {i+1} of {pred_sample_size}")
+                          f"sample {i+1} of {pred_ensemble_size}")
             y_it = model.predict(
                 x=x_it,
                 batch_size=None,

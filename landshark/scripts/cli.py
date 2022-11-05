@@ -175,6 +175,7 @@ def train_entrypoint(
         overwrite_model_dir(model_dir, checkpoint_dir)
 
     training_params = TrainingConfig(epochs, batchsize, test_batchsize, gpu)
+    training_params.save(model_dir)
     train_test_fn(
         training_records,
         testing_records,
@@ -213,39 +214,36 @@ def train_entrypoint(
     help="Whether it's a probabilistic model",
 )
 @click.option(
-    "--pred_sample_size",
+    "--pred_ensemble_size",
     type=click.IntRange(min=10),
     required=False,
     default=1000,
     help="Number of samples for the prediction ensemble",
 )
-@click.option(
-    "--batchsize",
-    type=click.IntRange(min=100),
-    required=False,
-    default=10000,
-    help="Batch size used in tensorflow probability model training",
-)
 @click.pass_context
 def run_predict(ctx: click.Context, config: str, checkpoint: str, data: str, proba: bool,
-                pred_sample_size: int, batchsize: int) -> None:
+                pred_ensemble_size: int) -> None:
     """Predict using a learned model."""
     catching_f = errors.catch_and_exit(predict_entrypoint)
     catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu, proba,
-               pred_sample_size, batchsize)
+               pred_ensemble_size)
 
 
 def predict_entrypoint(
     config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool, proba: bool,
-    pred_sample_size: int, batchsize: int
+    pred_ensemble_size: int
 ) -> None:
     """Entrypoint for predict function."""
     if keras:
         if proba:
             from functools import partial
-            log.info(f"Using prediction sample size of {pred_sample_size}")
-            predict_fn = partial(kerasmodel.predict_tfp, pred_sample_size=pred_sample_size,
-                                 batchsize=batchsize)
+            log.info(f"Using prediction ensemble size of {pred_ensemble_size}")
+            training_config = TrainingConfig.load(checkpoint)
+            predict_fn = partial(
+                kerasmodel.predict_tfp,
+                pred_ensemble_size=pred_ensemble_size,
+                training_config=training_config
+            )
         else:
             predict_fn = kerasmodel.predict
     else:
