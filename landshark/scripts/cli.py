@@ -175,7 +175,7 @@ def train_entrypoint(
         overwrite_model_dir(model_dir, checkpoint_dir)
 
     training_params = TrainingConfig(epochs, batchsize, test_batchsize, gpu)
-    training_params.save(model_dir)
+    training_params.save(model_dir)  # save for later use in tfp probability model prediction
     train_test_fn(
         training_records,
         testing_records,
@@ -235,17 +235,21 @@ def predict_entrypoint(
 ) -> None:
     """Entrypoint for predict function."""
     if keras:
+        from functools import partial
+        log.info(f"Using prediction ensemble size of {pred_ensemble_size}")
+        training_config = TrainingConfig.load(checkpoint)
         if proba:
-            from functools import partial
-            log.info(f"Using prediction ensemble size of {pred_ensemble_size}")
-            training_config = TrainingConfig.load(checkpoint)
             predict_fn = partial(
                 kerasmodel.predict_tfp,
                 pred_ensemble_size=pred_ensemble_size,
                 training_config=training_config
             )
         else:
-            predict_fn = kerasmodel.predict
+            predict_fn = partial(
+                kerasmodel.predict,
+                pred_ensemble_size=pred_ensemble_size,
+                training_config=training_config
+            )
     else:
         predict_fn = predict
 

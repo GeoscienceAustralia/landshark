@@ -431,6 +431,8 @@ def predict(
         metadata: Training,
         records: List[str],
         params: QueryConfig,
+        pred_ensemble_size: int,
+        training_config: TrainingConfig
 ) -> Generator:
     """Load a model and predict results for record inputs."""
     x = dataset_fn(records, params.batchsize, metadata.features)()
@@ -438,7 +440,7 @@ def predict(
     targets = get_target_data(metadata.targets)
     x = x.map(flatten_dataset_x)
 
-    model = cf.model(*inputs, targets, metadata)
+    model = cf.model(*inputs, targets, metadata, training_config)
 
     weights_file = Path(checkpoint_dir) / "checkpoint_weights.h5"
     if weights_file.exists():
