@@ -395,12 +395,14 @@ def predict_tfp(
         model.load_weights(str(weights_file))
     for batch, x_it in enumerate(x):
         preds = []
+        preds_ = []
+        stds = []
         for i in range(pred_ensemble_size):
             if i % 10 == 0:
                 size = x_it[list(x_it.keys())[0]].shape[0]
                 log.debug(f"Predicting batch {batch} of size {size}, "
                           f"sample {i+1} of {pred_ensemble_size}")
-            y_it = model.predict(
+            y_it_ = model.predict(
                 x=x_it,
                 batch_size=None,
                 verbose=0,
@@ -410,17 +412,35 @@ def predict_tfp(
                 workers=1,
                 use_multiprocessing=False,
             )
+            y_it = model(x_it)
             if not isinstance(y_it, list):
                 y_it = [y_it]
-            preds.append(y_it)
+            if not isinstance(y_it_, list):
+                y_it_ = [y_it_]
+            d_lst_mean = [dist.mean().numpy() for dist in y_it]
+            d_lst_std = [dist.stddev().numpy() for dist in y_it]
+            preds.append(d_lst_mean)
+            preds_.append(y_it_)
+            stds.append(d_lst_std)
         y_it_mean = [np.vstack(preds).mean(axis=0)]
-        y_it_std = [np.vstack(preds).std(axis=0)]
+        y_it_mean_ = [np.vstack(preds_).mean(axis=0)]
+        y_it_std = [np.vstack(stds).mean(axis=0)]
+        y_it_std_ = [np.vstack(preds_).std(axis=0)]
+
         output_std_names = [n + "_std" for n in model.output_names]
+        alt_output_mean_names = [n + "_alt" for n in model.output_names]
+        alt_output_std_names = [n + "_alt_std" for n in model.output_names]
         predictions = dict(
             p for p in zip(model.output_names, y_it_mean) if p[0].startswith("independent_normal")
         )
         predictions.update(
             p for p in zip(output_std_names, y_it_std) if p[0].startswith("independent_normal")
+        )
+        predictions.update(
+            p for p in zip(alt_output_mean_names, y_it_mean_) if p[0].startswith("independent_normal")
+        )
+        predictions.update(
+            p for p in zip(alt_output_std_names, y_it_std_) if p[0].startswith("independent_normal")
         )
         yield predictions
 

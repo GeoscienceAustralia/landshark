@@ -19,7 +19,7 @@ mpirun -np $((PBS_NCPUS/ncores_per_task)) --map-by ppr:$((ncores_per_numanode/nc
 # for i in {1..384}; do echo $i; echo ./pred_parts.sh $i 384 >> cmds.txt; done
 # generate merge statement
 # merge statement
-# echo gdal_merge.py -o predictions_log_cond_1.tif \\ > merge.txt
+# echo gdal_merge.py \\ > merge.txt
 # for i in {1..384}; do echo nn_regression_keras_global_local_model_6of10/predictions_log_cond_1_${i}of384.tif >> merge.txt \\ ; done
 # echo -o predictions_log_cond_1.tif >> merge.txt
 # sed -i 's/predictions_log_cond_12/predictions_cond_12/g' merge12_768.txt
