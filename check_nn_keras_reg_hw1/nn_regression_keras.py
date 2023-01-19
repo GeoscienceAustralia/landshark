@@ -26,6 +26,7 @@ from landshark.kerasmodel import (
     impute_embed_concat_layer,
 )
 from landshark.metadata import Training
+from landshark.model import TrainingConfig, QueryConfig
 
 def r2(y_true, y_pred):
     """Coefficient of determination metric."""
@@ -43,6 +44,7 @@ def model(
     coords: tf.keras.Input,
     targets: List[TargetData],
     metadata: Training,
+    training_params: TrainingConfig
 ) -> tf.keras.Model:
     """Example model config.
     Must match the signature above and return a compiled tf.keras.Model
