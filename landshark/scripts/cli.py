@@ -347,7 +347,17 @@ def oos_predict_entrypoint(
     y_dash_it = predict_fn(
         checkpoint, sys.modules[cf], train_metadata, oos_records, params
     )
+    from landshark.tfread import dataset_fn
+    xtest = dataset_fn(
+        oos_records, 1000, oos_metadata.features, oos_metadata.targets
+    )()
+    import numpy as np
+    import tensorflow_datasets as tfds
+    ds = tfds.as_numpy(xtest)
+    ys = np.vstack([ex[1] for ex in ds])
     import IPython; IPython.embed();
+    # targets = train_metadata.targets.labels
+    # predictions =
     # write_shapefile(
     #     y_dash_it,
     #     checkpoint,

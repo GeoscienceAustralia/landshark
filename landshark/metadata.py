@@ -229,7 +229,9 @@ class Training(PickleObj):
 
 
 class Validation(Training):
+
     _filename = "VALIDATION.bin"
+
     def __init__(
             self,
             targets: Target,
@@ -237,12 +239,10 @@ class Validation(Training):
             nfolds: int,
             testfold: int,
             fold_counts: Dict[int, int],
+            predictions: np.ndarray
     ) -> None:
-        self.targets = targets
-        self.features = features
-        self.nfolds = nfolds
-        self.testfold = testfold
-        self.fold_counts = fold_counts
+        super().__init__(targets, features, nfolds, testfold, fold_counts)
+        self.prediction = predictions
 
 
 class TrainingValidate(PickleObj):
