@@ -27,7 +27,7 @@ import tensorflow as tf
 
 from landshark.metadata import FeatureSet, Training, PickleObj
 from landshark.saver import BestScoreSaver
-from landshark.tfread import dataset_fn, get_query_meta, get_training_meta
+from landshark.tfread import dataset_fn, get_query_meta, get_training_meta, get_oos_query_meta
 
 log = logging.getLogger(__name__)
 signal.signal(signal.SIGINT, signal.default_int_handler)
@@ -161,6 +161,18 @@ def setup_query(
     train_meta = Training.load(checkpoint)
     module_name = load_model(config)
     return train_meta, query_meta, query_records, strip, nstrip, module_name
+
+
+def setup_oos_query(
+        config: str,
+        querydir: str,
+        checkpoint: str,
+) -> Tuple[Training, Training, List[str], str]:
+    """Get metadata and records needed to make predictions."""
+    oos_meta, oos_records = get_oos_query_meta(querydir)
+    train_meta = Training.load(checkpoint)
+    module_name = load_model(config)
+    return train_meta, oos_meta, oos_records, module_name
 
 
 def predict(

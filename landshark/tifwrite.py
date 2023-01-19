@@ -115,3 +115,36 @@ def write_geotiffs(
 
     for w in writers.values():
         w.close()
+
+
+def write_shapefile(
+        y_dash: Iterator[Dict[str, np.ndarray]],
+        directory: str,
+        imspec: ImageSpec,
+        tag: str = "",
+) -> None:
+    """Write predictions `y` to tifs according to the query image spec."""
+    log.info("Initialising Geotiff writers")
+    log.info("Image width: {} height: {}".format(imspec.width, imspec.height))
+
+    # "peek" at the first prediction so we can see what we're dealing with
+    y0 = next(y_dash)
+    y_dash = itertools.chain([y0], y_dash)
+
+    for k, v in y0.items():
+        if not (v.ndim == 1 or (v.ndim == 2 and v.shape[1] == 1)):
+            raise InvalidPredictionShape(k, v.shape)
+
+    writers = {
+        k: _make_writer(directory, k + "_" + tag, v.dtype, imspec)
+        for k, v in y0.items()
+    }
+
+    with tqdm(total=imspec.width * imspec.height) as pbar:
+        for y_i in y_dash:
+            for k, v in y_i.items():
+                writers[k].write(v.flatten())
+            pbar.update(v.size)
+
+    for w in writers.values():
+        w.close()

@@ -81,6 +81,13 @@ def get_query_meta(query_dir: str) -> Tuple[FeatureSet, List[str], int, int]:
     return query_metadata, query_records, strip, nstrip
 
 
+def get_oos_query_meta(oos_dir: str) -> Tuple[Training, List[str]]:
+    """Read query metadata and record filenames from dir."""
+    oos_records = glob(os.path.join(oos_dir, "train.*.tfrecord"))
+    oos_metadata = Training.load(oos_dir)
+    return oos_metadata, oos_records
+
+
 def _make_mask(
     x: Dict[str, np.ndarray], xm: Dict[str, np.ndarray]
 ) -> Dict[str, np.ma.MaskedArray]:

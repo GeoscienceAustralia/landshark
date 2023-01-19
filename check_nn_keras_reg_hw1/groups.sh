@@ -51,23 +51,23 @@ python submit_with_optimal_epochs.py \
   -f $total_folds -e $epochs -n $name
 
 
-function query_predict {
-    echo starting query and preict $1 of $2
-    n=$1
-    N=$2
-    mkdir -p query_${name}_strip${1}of${2}
-    landshark-extract --nworkers 0 --batch-mb 0.1 query \
-        --features ./features_${name}.hdf5 \
-        --strip ${n} ${N} --name ${name} \
-        --halfwidth ${halfwidth}
-    landshark --keras-model --batch-mb 0.1 predict \
-        --config ${config} \
-        --checkpoint ${config_stem}_model_1of1 \
-        --data query_${name}_strip${n}of${N}
-    echo done query and preict $1 of $2
-}
-export -f query_predict
-
-parallel  mkdir -p query_${name}_strip{1}of{2} ::: {1..8} ::: 8
-parallel -u -j 4 query_predict {1} {2} ">" query_${name}_strip{1}of{2}/${PBS_JOBNAME}_${PBS_JOBID}_{1}.log ::: {1..8} ::: 8
+#function query_predict {
+#    echo starting query and preict $1 of $2
+#    n=$1
+#    N=$2
+#    mkdir -p query_${name}_strip${1}of${2}
+#    landshark-extract --nworkers 0 --batch-mb 0.1 query \
+#        --features ./features_${name}.hdf5 \
+#        --strip ${n} ${N} --name ${name} \
+#        --halfwidth ${halfwidth}
+#    landshark --keras-model --batch-mb 0.1 predict \
+#        --config ${config} \
+#        --checkpoint ${config_stem}_model_1of1 \
+#        --data query_${name}_strip${n}of${N}
+#    echo done query and preict $1 of $2
+#}
+#export -f query_predict
+#
+#parallel  mkdir -p query_${name}_strip{1}of{2} ::: {1..8} ::: 8
+#parallel -u -j 4 query_predict {1} {2} ">" query_${name}_strip{1}of{2}/${PBS_JOBNAME}_${PBS_JOBID}_{1}.log ::: {1..8} ::: 8
 exit 0

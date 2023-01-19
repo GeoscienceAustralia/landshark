@@ -29,12 +29,13 @@ from landshark.model import (
     TrainingConfig,
     predict,
     setup_query,
+    setup_oos_query,
     setup_training,
     train_test,
 )
 from landshark.saver import overwrite_model_dir
 from landshark.scripts.logger import configure_logging
-from landshark.tifwrite import write_geotiffs
+from landshark.tifwrite import write_geotiffs, write_shapefile
 from landshark.util import points_per_batch
 
 log = logging.getLogger(__name__)
@@ -270,6 +271,89 @@ def predict_entrypoint(
         feature_metadata.image,
         tag="{}of{}".format(strip, nstrips),
     )
+
+
+@cli.command("predict_oos")
+@click.option(
+    "--config",
+    type=click.Path(exists=True),
+    required=True,
+    help="Path to the model file",
+)
+@click.option(
+    "--checkpoint",
+    type=click.Path(exists=True),
+    required=True,
+    help="Path to the trained model checkpoint",
+)
+@click.option(
+    "--data",
+    type=click.Path(exists=True),
+    required=True,
+    help="Path to the hdf5 file containing the oos targets",
+)
+@click.option(
+    "--proba",
+    type=click.BOOL,
+    required=False,
+    default=False,
+    help="Whether it's a probabilistic model",
+)
+@click.option(
+    "--pred_ensemble_size",
+    type=click.IntRange(min=10),
+    required=False,
+    default=1000,
+    help="Number of samples for the prediction ensemble",
+)
+@click.pass_context
+def run_oos_predict(ctx: click.Context, config: str, checkpoint: str, data: str, proba: bool,
+                    pred_ensemble_size: int) -> None:
+    """Predict using a learned model."""
+    catching_f = errors.catch_and_exit(oos_predict_entrypoint)
+    catching_f(config, ctx.obj.keras, checkpoint, data, ctx.obj.batchMB, ctx.obj.gpu, proba,
+               pred_ensemble_size)
+
+
+def oos_predict_entrypoint(
+        config: str, keras: bool, checkpoint: str, data: str, batchMB: float, gpu: bool, proba: bool,
+        pred_ensemble_size: int
+) -> None:
+    """Entrypoint for predict function."""
+    if keras:
+        from functools import partial
+        log.info(f"Using prediction ensemble size of {pred_ensemble_size}")
+        training_config = TrainingConfig.load(checkpoint)
+        if proba:
+            predict_fn = partial(
+                kerasmodel.predict_tfp,
+                pred_ensemble_size=pred_ensemble_size,
+                training_config=training_config
+            )
+        else:
+            predict_fn = partial(
+                kerasmodel.predict,
+                pred_ensemble_size=pred_ensemble_size,
+                training_config=training_config
+            )
+    else:
+        predict_fn = predict
+
+    train_metadata, oos_metadata, oos_records, cf = setup_oos_query(config, data, checkpoint)
+
+    query_batchsize = points_per_batch(train_metadata.features, batchMB)
+
+    params = QueryConfig(query_batchsize, gpu)
+    y_dash_it = predict_fn(
+        checkpoint, sys.modules[cf], train_metadata, oos_records, params
+    )
+    import IPython; IPython.embed();
+    # write_shapefile(
+    #     y_dash_it,
+    #     checkpoint,
+    #     oos_metadata.image,
+    #     tag="{}of{}".format(strip, nstrips),
+    # )
 
 
 if __name__ == "__main__":

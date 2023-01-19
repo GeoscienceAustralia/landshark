@@ -33,3 +33,14 @@
 
 # parallel -u --link  --dryrun echo {1} {2} ">" {1}.log ::: bird flower fist ::: red green blue
 # parallel -u --link  echo {1} {2} ">" {1}.log ::: bird flower fist ::: red green blue
+
+# post processing
+# run with 10 nodes with 48 cores each
+# parallel -u qsub {}_pred_parts.sh ::: {1..10}
+
+# echo gdal_merge.py \\ > merge.txt
+# for i in {1..480}; do echo nn_regression_keras_global_local_model_6of10/predictions_log_cond_1_${i}of480.tif >> merge.txt \\ ; done
+# echo -o predictions_log_cond_1.tif >> merge.txt
+# bash merge.txt
+
+# sed -i 's/predictions_log_cond_12/predictions_cond_12/g' merge.txt

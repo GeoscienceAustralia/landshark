@@ -57,3 +57,26 @@ landshark -v DEBUG --keras-model --batch-mb 0.001 predict \
 #    --config nn_regression_keras.py \
 #    --checkpoint nn_regression_keras_model_1of10 \
 #    --data query_sirsam_strip5of200
+
+# oos validation:
+landshark-import --batch-mb 0.001 targets \
+  --shapefile ../integration/data/targets/geochem_sites.shp \
+  --name sirsam_oos \
+  --record Na_ppm_i_1 \
+  --dtype continuous
+
+
+# TODO: can avoid saving one of train.xxx.tfrecord and test.xxx.tfrecord
+landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
+  --features features_sirsam.hdf5 \
+  --split 1 1 \
+  --targets targets_sirsam_oos.hdf5 \
+  --name sirsam_oos \
+  --halfwidth 1
+
+landshark -v DEBUG --keras-model --batch-mb 0.001 predict_oos \
+    --proba true \
+    --config nn_regression_keras_global_local.py \
+    --checkpoint nn_regression_keras_global_local_model_1of10 \
+    --data traintest_sirsam_oos_fold1of1 \
+    --pred_ensemble_size 12
