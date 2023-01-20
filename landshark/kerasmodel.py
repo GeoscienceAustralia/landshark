@@ -309,9 +309,9 @@ def train_test(
         UpdateCallback(training_config.epochs, iterations),
         tf.keras.callbacks.CSVLogger(str(scores_files), separator=',', append=True)
     ]
-    log.debug(f"number of batches/evaluations before test set evaluation {len(list(xtrain))}")
-    log.debug(f"batch sizes of training data {[x[1].shape[0] for x in list(xtrain)]}")
-    log.debug(f"Training points before test set evaluation {sum(x[1].shape[0] for x in list(xtrain))}")
+    # log.debug(f"number of batches/evaluations before test set evaluation {len(list(xtrain))}")
+    # log.debug(f"batch sizes of training data {[x[1].shape[0] for x in list(xtrain)]}")
+    # log.debug(f"Training points before test set evaluation {sum(x[1].shape[0] for x in list(xtrain))}")
 
     try:
         while True:

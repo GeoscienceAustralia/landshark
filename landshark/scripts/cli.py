@@ -20,6 +20,9 @@ import sys
 from typing import NamedTuple, Optional
 
 import click
+import json
+import numpy as np
+import tensorflow_datasets as tfds
 
 from landshark import __version__, errors
 from landshark import kerasmodel
@@ -35,8 +38,9 @@ from landshark.model import (
 )
 from landshark.saver import overwrite_model_dir
 from landshark.scripts.logger import configure_logging
-from landshark.tifwrite import write_geotiffs, write_shapefile
-from landshark.util import points_per_batch
+from landshark.tifwrite import write_geotiffs
+from landshark.util import points_per_batch, score
+from landshark.tfread import dataset_fn
 
 log = logging.getLogger(__name__)
 
@@ -347,23 +351,30 @@ def oos_predict_entrypoint(
     y_dash_it = predict_fn(
         checkpoint, sys.modules[cf], train_metadata, oos_records, params
     )
-    from landshark.tfread import dataset_fn
+    y_pred = [y for y in y_dash_it]  # evaluation
+    labels = [k for k, v in y_pred[0].items()]
+    y_pred_ = []
+    for yy in y_pred:
+        y_pred_.append(np.hstack([v for k, v in yy.items()]))
+    y_pred_numpy = np.vstack(y_pred_)
+
     xtest = dataset_fn(
         oos_records, 1000, oos_metadata.features, oos_metadata.targets
     )()
-    import numpy as np
-    import tensorflow_datasets as tfds
-    ds = tfds.as_numpy(xtest)
-    ys = np.vstack([ex[1] for ex in ds])
-    import IPython; IPython.embed();
-    # targets = train_metadata.targets.labels
-    # predictions =
-    # write_shapefile(
-    #     y_dash_it,
-    #     checkpoint,
-    #     oos_metadata.image,
-    #     tag="{}of{}".format(strip, nstrips),
-    # )
+    ds_numpy = tfds.as_numpy(xtest)
+
+    y_true_numpy = np.vstack([ex[1] for ex in ds_numpy])
+    scores = score(labels, y_true_numpy, y_pred_numpy)
+    score_string = "OOS Validation complete:\n"
+    for label, scrs in scores.items():
+        score_string += "{}\n".format(label)
+        for metric, sc in scrs.items():
+            score_string += "{}\t= {}\n".format(metric, sc)
+    log.info(score_string)
+
+    score_path = os.path.join(checkpoint, "oos_validation_scores.json")
+    with open(score_path, "w") as f:
+        json.dump({k: str(v) for k, v in scores.items()}, f, indent=4)
 
 
 if __name__ == "__main__":

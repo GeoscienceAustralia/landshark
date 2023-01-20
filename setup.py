@@ -55,7 +55,8 @@ setup(
         "tensorflow>=2.6.0",
         "keras>=2.6.0",
         "tensorflow_probability>=0.11",
-        "pydot~=1.4.2"
+        "pydot~=1.4.2",
+        "tensorflow_datasets>=4.8.2",
     ],
     extras_require={
         "dev": [

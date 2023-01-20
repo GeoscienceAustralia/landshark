@@ -19,9 +19,10 @@ landshark-import --nworkers 0 --batch-mb 0.001 tifs \
 
 # import targets
 landshark-import --batch-mb 0.001 targets \
-    --name ${name} --record group_cat \
+    --name ${name} --record group_cat --record group --record Zr_ppm_i_1 \
     --dtype continuous --group_col group \
-    --shapefile ../integration/data/targets/geochem_sites_groups_15.shp;
+    --shapefile ../integration/data/targets/geochem_sites_groups_15.shp
+
 
 function train_fold {
   i=$1
@@ -32,7 +33,8 @@ function train_fold {
     --features ./features_${name}.hdf5 \
     --targets ./targets_${name}.hdf5 \
     --name $name --halfwidth ${halfwidth} \
-    --split "${i}" "${total_folds}" --group_kfold;
+    --split "${i}" "${total_folds}";
+#    --split "${i}" "${total_folds}" --group_kfold;
 
   landshark --keras-model --no-gpu train \
     --config ${config} --epochs ${epochs} --iterations ${iterations} \
@@ -42,13 +44,38 @@ function train_fold {
 
 export -f train_fold
 
-parallel  mkdir -p ${config_stem}_model_{1}of{2}/ ::: {1..5} ::: 5
-parallel -u --progress train_fold {1} {2} ">" \
-  ${config_stem}_model_{1}of{2}/${PBS_JOBNAME}_${PBS_JOBID}_{1}.log ::: {1..5} ::: 5
+#parallel  mkdir -p ${config_stem}_model_{1}of{2}/ ::: {1..5} ::: 5
+#parallel -u --progress train_fold {1} {2} ">" \
+#  ${config_stem}_model_{1}of{2}/${PBS_JOBNAME}_${PBS_JOBID}_{1}.log ::: {1..5} ::: 5
+#
+#python submit_with_optimal_epochs.py \
+#  -c ${config} -w ${halfwidth} -b $batchsize -i ${iterations} \
+#  -f $total_folds -e $epochs -n $name
 
-python submit_with_optimal_epochs.py \
-  -c ${config} -w ${halfwidth} -b $batchsize -i ${iterations} \
-  -f $total_folds -e $epochs -n $name
+train_fold 1 1
+
+# oos validation:
+landshark-import --batch-mb 0.001 targets \
+  --shapefile ../integration/data/targets/geochem_sites_groups_15.shp \
+  --name ${name}_oos \
+  --record group_cat --record group --record Zr_ppm_i_1 \
+  --dtype continuous
+
+
+# TODO: can avoid saving one of train.xxx.tfrecord and test.xxx.tfrecord
+landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
+  --features features_${name}.hdf5 \
+  --split 1 1 \
+  --targets targets_${name}_oos.hdf5 \
+  --name ${name}_oos \
+  --halfwidth 1
+
+landshark -v DEBUG --keras-model --batch-mb 0.001 predict_oos \
+    --proba false \
+    --config ${config} \
+    --checkpoint ${config_stem}_model_1of1 \
+    --data traintest_${name}_oos_fold1of1 \
+    --pred_ensemble_size 12
 
 
 #function query_predict {

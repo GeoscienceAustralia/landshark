@@ -16,8 +16,10 @@
 
 import logging
 from typing import Tuple
+from collections import defaultdict
 
 import numpy as np
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, explained_variance_score
 
 from landshark.basetypes import (
     CategoricalType,
@@ -28,6 +30,21 @@ from landshark.basetypes import (
 from landshark.metadata import FeatureSet
 
 log = logging.getLogger(__name__)
+
+SCORES = {
+    "r2": r2_score,
+    "mse": mean_squared_error,
+    "mae": mean_absolute_error,
+    "ex_var": explained_variance_score
+}
+
+
+def score(labels, y_true, y_pred):
+    scores = defaultdict(dict)
+    for l in labels:
+        for s, func in SCORES.items():
+            scores[l][s] = func(y_true, y_pred)
+    return scores
 
 
 def to_masked(array: np.ndarray, missing_value: MissingType) -> np.ma.MaskedArray:
