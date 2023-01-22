@@ -23,6 +23,11 @@ landshark-import --batch-mb 0.001 targets \
     --dtype continuous --group_col group \
     --shapefile ../integration/data/targets/geochem_sites_groups_15.shp
 
+function basename {
+  bn=${1##*/}
+  parent_dir=${1##*/}
+  echo $bn
+}
 
 function train_fold {
   i=$1
