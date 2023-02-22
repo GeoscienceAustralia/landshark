@@ -3,6 +3,10 @@
 help:
 	@echo "clean - clean all artefacts"
 	@echo "pred-clean - clean all helper prediction qsub files "
+	@echo "query-clean - clean all helper qeery dirs"
+	@echo "hdf-clean - clean all hdf5 files"
+	@echo "model-clean - clean all model dirs"
+	@echo "traintest-clean - clean all traintest dirs"
 
 config = nn_regression_keras_global_local
 name = sirsam
