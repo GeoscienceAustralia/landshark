@@ -31,11 +31,50 @@ from landshark.metadata import FeatureSet
 
 log = logging.getLogger(__name__)
 
+
+def lins_ccc(y_true, y_pred):
+    """
+    Lin's Concordance Correlation Coefficient.
+
+    See https://en.wikipedia.org/wiki/Concordance_correlation_coefficient
+
+    Parameters
+    ----------
+    y_true: ndarray
+        vector of true targets
+    y_pred: ndarray
+        vector of predicted targets
+
+    Returns
+    -------
+    float:
+        1.0 for a perfect match between :code:`y_true` and :code:`y_pred`, less
+        otherwise
+
+    Example
+    -------
+    >>> y_true = np.random.randn(100)
+    >>> lins_ccc(y_true, y_true) > 0.99  # Should be good predictor
+    True
+    >>> lins_ccc(y_true, np.zeros_like(y_true)) < 0.01  # Bad predictor
+    True
+    """
+
+    t = y_true.mean()
+    p = y_pred.mean()
+    St = y_true.var()
+    Sp = y_pred.var()
+    Spt = np.mean((y_true - t) * (y_pred - p))
+
+    return 2 * Spt / (St + Sp + (t - p)**2)
+
+
 SCORES = {
     "r2": r2_score,
     "mse": mean_squared_error,
     "mae": mean_absolute_error,
-    "ex_var": explained_variance_score
+    "ex_var": explained_variance_score,
+    'lins_ccc': lins_ccc
 }
 
 
