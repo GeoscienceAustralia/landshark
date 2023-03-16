@@ -8,6 +8,7 @@ landshark-import --batch-mb 0.001 targets \
   --shapefile ../integration/data/targets/geochem_sites.shp \
   --name sirsam \
   --record Na_ppm_i_1 \
+  --record Zr_ppm_i_1 \
   --dtype continuous
 
 landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
@@ -32,11 +33,10 @@ landshark-extract --batch-mb 0.01 query \
     --halfwidth 1
 
 landshark -v DEBUG --keras-model --batch-mb 0.001 predict \
-    --proba true \
-    --config nn_regression_keras_global_local.py \
+    --proba true \    --config nn_regression_keras_global_local.py \
     --checkpoint nn_regression_keras_global_local_model_1of10 \
     --data query_sirsam_strip5of200 \
-    --pred_ensemble_size 12
+    --pred_ensemble_size 5
 
 # non-proba
 #landshark --keras-model train \
@@ -79,4 +79,4 @@ landshark -v DEBUG --keras-model --batch-mb 0.001 predict_oos \
     --config nn_regression_keras_global_local.py \
     --checkpoint nn_regression_keras_global_local_model_1of10 \
     --data traintest_sirsam_oos_fold1of1 \
-    --pred_ensemble_size 12
+    --pred_ensemble_size 3

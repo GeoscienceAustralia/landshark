@@ -8,7 +8,7 @@ help:
 	@echo "model-clean - clean all model dirs"
 	@echo "traintest-clean - clean all traintest dirs"
 
-config = nn_regression_keras_global_local
+config = nn_regression_keras
 name = sirsam
 halfwidth = 1
 epochs = 15
@@ -26,8 +26,6 @@ clean: traintest-clean model-clean hdf-clean query-clean pred-clean
 
 traintest-clean:
 	rm -fr traintest_$(name)_fold*
-	rm -fr traintest_$(name)_oos_fold*
-
 
 model-clean:
 	rm -fr $(config)_model_*/
@@ -36,7 +34,7 @@ query-clean:
 	rm -fr query_$(name)_strip*/
 
 hdf-clean:
-	rm -fr features_$(name).hdf5 targets_$(name).hdf5 targets_$(name)_oos.hdf5
+	rm -fr features_$(name).hdf5 targets_$(name).hdf5
 
 pred-clean:
 	rm -f *_pred_parts.sh
