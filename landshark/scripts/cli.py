@@ -305,7 +305,7 @@ def predict_entrypoint(
 )
 @click.option(
     "--pred_ensemble_size",
-    type=click.IntRange(min=10),
+    type=click.IntRange(min=3),
     required=False,
     default=1000,
     help="Number of samples for the prediction ensemble",

@@ -42,8 +42,9 @@ SCORES = {
 def score(labels, y_true, y_pred):
     scores = defaultdict(dict)
     for i, l in enumerate(labels):
-        for s, func in SCORES.items():
-            scores[l][s] = func(y_true[:, i], y_pred[:, i])
+        if not l.endswith("_std"):
+            for s, func in SCORES.items():
+                scores[l][s] = func(y_true[:, 0], y_pred[:, i])
     return scores
 
 
