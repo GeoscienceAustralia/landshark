@@ -1,22 +1,39 @@
 set -e
+export name="sirsam"
+# extract features
 landshark-import --nworkers 0 --batch-mb 0.001 tifs \
-    --name sirsam \
+    --name ${name} \
     --ignore-crs  \
     --continuous ../integration/data/continuous
 
+# extract targets
 landshark-import --batch-mb 0.001 targets \
   --shapefile ../integration/data/targets/geochem_sites.shp \
-  --name sirsam \
+  --name ${name} \
   --record Na_ppm_i_1 \
   --record Zr_ppm_i_1 \
   --dtype continuous
 
-landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
-  --features features_sirsam.hdf5 \
+# create train/test data split
+landshark-extract --nworkers 0 --batch-mb 0.001 traintest \
+  --features features_${name}.hdf5 \
   --split 1 10 \
-  --targets targets_sirsam.hdf5 \
-  --name sirsam \
+  --targets targets_${name}.hdf5 \
+  --name ${name} \
   --halfwidth 1
+
+
+# extract validation data - note I am using the same targets as targets and validation here
+# targets and validation hdf5 files could be different with a different validation shapefile/hdf5
+landshark-extract --nworkers 0 --batch-mb 0.001 trainvalidate \
+  --features features_${name}.hdf5 \
+  --targets targets_${name}.hdf5 \
+  --validation targets_${name}.hdf5 \
+  --name ${name} \
+  --halfwidth 1
+
+
+
 
 
 ## proba = True
@@ -33,7 +50,8 @@ landshark-extract --batch-mb 0.01 query \
     --halfwidth 1
 
 landshark -v DEBUG --keras-model --batch-mb 0.001 predict \
-    --proba true \    --config nn_regression_keras_global_local.py \
+    --proba true \
+    --config nn_regression_keras_global_local.py \
     --checkpoint nn_regression_keras_global_local_model_1of10 \
     --data query_sirsam_strip5of200 \
     --pred_ensemble_size 5
