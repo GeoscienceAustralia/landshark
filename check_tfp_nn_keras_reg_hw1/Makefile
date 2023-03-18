@@ -17,7 +17,7 @@ iterations = 10
 fold = 5
 total_folds = 15  # WARNING: if you change this, change parallel commands too
 query_fold = 5
-query_total_folds = 15  # WARNING: if you change this, change parallel commands too
+query_total_folds = 100  # WARNING: if you change this, change parallel commands too
 data = ../integration/data/continuous
 shape = ../integration/data/targets/geochem_sites_groups_15.shp
 validation_shape = ../integration/data/targets/geochem_sites_groups_15.shp
@@ -85,9 +85,9 @@ import-validation-targets:
     --name validation_${name} \
     --shapefile $(shape) \
     --dtype continuous \
-    --group_col $(group_col) \
     --record Na_ppm_i_1 \
     --record Zr_ppm_i_1
+    #    --group_col $(group_col) \
 
 extract-trainvalidation:
 	landshark-extract --nworkers 0 --batch-mb 0.01 trainvalidate \
@@ -117,9 +117,9 @@ import-targets:
     --name ${name} \
     --shapefile $(shape) \
     --dtype continuous \
-    --group_col $(group_col) \
     --record Na_ppm_i_1 \
     --record Zr_ppm_i_1
+    #    --group_col $(group_col) \
 
 extract-traintest:
 	landshark-extract --nworkers 0 --batch-mb 0.01 traintest \
@@ -127,9 +127,9 @@ extract-traintest:
   	--split $(fold) $(total_folds) \
   	--targets targets_${name}.hdf5 \
 	--name ${name} \
-	--group_kfold \
+	--kfold \
   	--halfwidth ${halfwidth}
-
+	# --group_kfold \
 
 train-traintest:
 	landshark --keras-model train \
@@ -152,7 +152,7 @@ predict-traintest:
 	--proba true \
 	--config $(config).py \
 	--checkpoint ${config}_model_$(fold)of$(total_folds) \
-    --data query_${name}_strip$(fold)of$(total_folds) \
+    --data query_${name}_strip$(query_fold)of$(query_total_folds) \
     --pred_ensemble_size 5
 
 predict-trainvalidation:
