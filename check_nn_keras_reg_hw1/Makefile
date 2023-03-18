@@ -143,7 +143,7 @@ query:
     --features features_${name}.hdf5 \
     --strip $(fold) $(total_folds) \
     --name ${name} \
-    --halfwidth 1
+    --halfwidth $(halfwidth)
 
 predict-traintest:
 	landshark --keras-model --batch-mb 0.001 predict \
