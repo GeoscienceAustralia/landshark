@@ -7,6 +7,7 @@ landshark-import --batch-mb 0.001 targets \
   --shapefile ../integration/data/targets/geochem_sites.shp \
   --name Na_ppm_i_1 \
   --record Na_ppm_i_1 \
+  --record Zr_ppm_i_1 \
   --dtype continuous
 
 landshark-extract --nworkers 0 --batch-mb 0.001 traintest \

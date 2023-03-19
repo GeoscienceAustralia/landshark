@@ -149,7 +149,8 @@ predict-traintest:
 	landshark --keras-model --batch-mb 0.001 predict \
 	--config $(config).py \
 	--checkpoint ${config}_model_$(fold)of$(total_folds) \
-    --data query_${name}_strip$(fold)of$(total_folds)
+    --data query_${name}_strip$(query_fold)of$(query_total_folds) \
+    --pred_ensemble_size 5  # not used
 
 predict-trainvalidation:
 	landshark --keras-model --batch-mb 0.001 predict \
