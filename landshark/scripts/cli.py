@@ -355,7 +355,7 @@ def oos_predict_entrypoint(
     labels = [k for k, v in y_pred[0].items()]
     y_pred_ = []
     for yy in y_pred:
-        y_pred_.append(np.hstack([v for k, v in yy.items()]))
+        y_pred_.append(np.vstack([y for y in yy.values()]).T)
     y_pred_numpy = np.vstack(y_pred_)
 
     xtest = dataset_fn(

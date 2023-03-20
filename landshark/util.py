@@ -83,7 +83,7 @@ def score(labels, y_true, y_pred):
     for i, l in enumerate(labels):
         if not l.endswith("_std"):
             for s, func in SCORES.items():
-                scores[l][s] = func(y_true[:, 0], y_pred[:, i])
+                scores[l][s] = func(y_true[:, i], y_pred[:, i])
     return scores
 
 

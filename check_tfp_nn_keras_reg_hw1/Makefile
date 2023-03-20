@@ -56,7 +56,7 @@ train-validation-model: import-features import-validation-targets extract-trainv
 
 oos-import-targets:
 	landshark-import --batch-mb 0.001 targets \
-	  --shapefile $(shape) \
+	  --shapefile $(validation_shape) \
 	  --name ${name}_oos \
 	  --record Na_ppm_i_1 \
 	  --record Zr_ppm_i_1 \

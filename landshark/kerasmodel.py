@@ -427,10 +427,10 @@ def predict_tfp(
 
         output_std_names = [n + "_std" for n in model.output_names]
         predictions = dict(
-            p for p in zip(model.output_names, y_it_mean_) if p[0].startswith("independent_normal")
+            (p, y_it_mean_[:, i]) for i, p in enumerate(model.output_names) if p.startswith("independent_normal")
         )
         predictions.update(
-            p for p in zip(output_std_names, y_it_std_) if p[0].startswith("independent_normal")
+            (p, y_it_std_[:, i]) for i, p in enumerate(output_std_names) if p.startswith("independent_normal")
         )
         # alt_output_mean_names = [n + "_alt" for n in model.output_names]
         # alt_output_std_names = [n + "_alt_std" for n in model.output_names]
