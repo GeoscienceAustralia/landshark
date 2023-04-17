@@ -16,10 +16,13 @@
 
 import os.path
 from glob import glob
-from typing import List
+from typing import List, Optional
 
 
-def tifnames(directories: List[str]) -> List[str]:
+def tifnames(
+    directories: Optional[List[str]] = None,
+    list_files: Optional[List[str]] = None
+    ) -> List[str]:
     """Recursively find all tif/gtif files within a list of directories."""
     names: List[str] = []
     for d in directories:
