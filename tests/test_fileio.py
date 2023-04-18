@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os import path
 import pytest
 
 from landshark.fileio import tifnames
@@ -28,6 +29,8 @@ tifs = [
     "./integration/data/nonmissing/SirSamualAusMagV6_rtp_ll.tif",
     "./integration/data/nonmissing/Soil_ASC.tif",
 ]
+
+tifs = [path.abspath(t) for t in tifs]
 
 dirs_tifs = [
     (["./integration/data"], tifs),

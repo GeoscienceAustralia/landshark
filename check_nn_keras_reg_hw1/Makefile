@@ -17,6 +17,7 @@ iterations = 10
 fold = 5
 total_folds = 10  # WARNING: if you change this, change parallel commands too
 data = ../integration/data/continuous
+data_list = ../integration/data/continuous/continuous_list.txt
 shape = ../integration/data/targets/geochem_sites_groups_15.shp
 validation_shape = ../integration/data/targets/geochem_sites_groups_15.shp
 predict_nodes = 10
@@ -108,6 +109,7 @@ import-features:
 	landshark-import --nworkers 0 --batch-mb 0.001 tifs \
 	--name ${name} \
 	--ignore-crs  \
+	--continuous_list $(data_list) \
 	--continuous $(data)
 
 import-targets:

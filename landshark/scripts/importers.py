@@ -102,6 +102,18 @@ def cli(ctx: click.Context, verbosity: str, nworkers: int, batch_mb: float) -> i
     help="Directory containing continuous geotifs",
 )
 @click.option(
+    "--categorical_list",
+    type=click.Path(exists=True),
+    multiple=True,
+    help="List/txt file containing categorical geotifs",
+)
+@click.option(
+    "--continuous_list",
+    type=click.Path(exists=True),
+    multiple=True,
+    help="List/txt file containing continuous geotifs",
+)
+@click.option(
     "--normalise/--no-normalise",
     is_flag=True,
     default=True,
@@ -119,6 +131,8 @@ def tifs(
     ctx: click.Context,
     categorical: Tuple[str, ...],
     continuous: Tuple[str, ...],
+    categorical_list: Tuple[str, ...],
+    continuous_list: Tuple[str, ...],
     normalise: bool,
     name: str,
     ignore_crs: bool,
@@ -128,8 +142,10 @@ def tifs(
     batchMB = ctx.obj.batchMB
     cat_list = list(categorical)
     con_list = list(continuous)
+    cat_lists_list = list(categorical_list)
+    con_lists_list = list(continuous_list)
     catching_f = errors.catch_and_exit(tifs_entrypoint)
-    catching_f(nworkers, batchMB, cat_list, con_list, normalise, name, ignore_crs)
+    catching_f(nworkers, batchMB, cat_list, con_list, cat_lists_list, con_lists_list, normalise, name, ignore_crs)
 
 
 def tifs_entrypoint(
@@ -137,6 +153,8 @@ def tifs_entrypoint(
     batchMB: float,
     categorical: List[str],
     continuous: List[str],
+    categorical_lists: List[str],
+    continuous_lists: List[str],
     normalise: bool,
     name: str,
     ignore_crs: bool,
@@ -144,8 +162,8 @@ def tifs_entrypoint(
     """Entrypoint for tifs without click cruft."""
     out_filename = os.path.join(os.getcwd(), "features_{}.hdf5".format(name))
 
-    con_filenames = tifnames(continuous)
-    cat_filenames = tifnames(categorical)
+    con_filenames = tifnames(continuous, continuous_lists)
+    cat_filenames = tifnames(categorical, categorical_lists)
     log.info("Found {} continuous TIF files".format(len(con_filenames)))
     log.info("Found {} categorical TIF files".format(len(cat_filenames)))
     has_con = len(con_filenames) > 0

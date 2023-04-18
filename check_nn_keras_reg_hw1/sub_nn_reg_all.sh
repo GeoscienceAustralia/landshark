@@ -4,6 +4,7 @@ export name="sirsam"
 landshark-import --nworkers 0 --batch-mb 0.001 tifs \
     --name ${name} \
     --ignore-crs  \
+    --continuous_list integration/data/continuous/continuous_list.txt \
     --continuous ../integration/data/continuous
 
 # extract targets
