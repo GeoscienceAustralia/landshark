@@ -35,6 +35,7 @@ def model(
     coords: tf.keras.Input,
     targets: List[TargetData],
     metadata: Training,
+    training_params: TrainingConfig
 ) -> tf.keras.Model:
     """Example model config.
     Must match the signature above and return a compiled tf.keras.Model
@@ -67,13 +68,22 @@ def model(
         )
         metrics[t.label] = "accuracy"
 
-        pred_name = f"predictions_{t.label}"
+        pred_name = f"predictions_most_probable_{t.label}"
         pred = tf.keras.layers.Lambda(
             lambda x: tf.keras.backend.cast(tf.keras.backend.argmax(x), "uint8"),
             name=pred_name,
         )(logits)
-
         outputs.extend([logits, pred])
+        probabilities = tf.keras.layers.Softmax(dtype="float32")(logits)
+        class_probabilities = [
+            tf.keras.layers.Lambda(
+                lambda x, jj: x[:, jj],
+                name=f"predictions_probability_class_{j}",
+                dtype="float32",
+                arguments={"jj": j}
+            )(probabilities) for j in range(t.n_classes)
+        ]
+        outputs.extend(class_probabilities)
         i += t.n_classes
 
     # create keras model

@@ -95,7 +95,7 @@ def cli(ctx: click.Context, verbosity: str, batch_mb: float, nworkers: int) -> i
     type=int,
     nargs=2,
     default=(1, 10),
-    help="Train/test split fold structure. Firt argument is test "
+    help="Train/test split fold structure. First argument is test "
     "fold (counting from 1), second is total folds.",
 )
 @click.option(
