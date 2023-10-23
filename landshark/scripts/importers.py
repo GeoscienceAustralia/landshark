@@ -22,6 +22,7 @@ from typing import List, NamedTuple, Tuple
 import click
 import numpy as np
 import tables
+import json
 
 from landshark import __version__, errors
 from landshark import metadata as meta
@@ -334,6 +335,14 @@ def targets_entrypoint(
             )
             catdata = get_maps(cat_source, cat_batchsize)
             mappings, counts = catdata.mappings, catdata.counts
+            records_dict = {}
+            for i, rec in enumerate(records):
+                records_dict[rec] = {int(k): int(v) for k, v in zip(mappings[i], counts[i])}
+            log.info(f"Shapefile with the following categorical records count found: \n {records_dict}", )
+            # json.dump(
+            #     records_dict,
+            #     open("categorical_counts.json", 'w'), sort_keys=True, indent=4
+            # )
             ncats = np.array([len(m) for m in mappings])
             write_categorical(cat_source, h5file, nworkers, cat_batchsize, mappings)
             cat_meta = meta.CategoricalTarget(
