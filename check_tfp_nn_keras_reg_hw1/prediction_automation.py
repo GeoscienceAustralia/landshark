@@ -11,8 +11,10 @@ def generate_automation_scripts_on_48_cup_nodes(opts):
     for i in range(nodes):
         start = i * 48 + 1
         end = (i + 1) * 48
-        s1 = f"\nparallel  mkdir -p query_{name}_strip{{1}}of{{2}} ::: {{{start}..{end}}} ::: {total_splits}"
-        s2 = f"\nparallel -u -j 48 query_predict {{1}} {{2}} \">\" query_{name}_strip{{1}}of{{2}}/${{PBS_JOBNAME}}_${{PBS_JOBID}}_{1}.log ::: {{{start}..{end}}} ::: {total_splits}"
+        s1 = f"\nmkdir -p query_logs/"
+        # s1 = f"\nparallel  mkdir -p query_{name}_strip{{1}}of{{2}} ::: {{{start}..{end}}} ::: {total_splits}"
+        s2 = f"\nparallel -u -j 48 query_predict {{1}} {{2}} \">\" query_logs/${{PBS_JOBNAME}}_${{PBS_JOBID}}_{{1}}_{{2}}.log ::: {{{start}..{end}}} ::: {total_splits}"
+        # s2 = f"\nparallel -u -j 48 query_predict {{1}} {{2}} \">\" query_{name}_strip{{1}}of{{2}}/${{PBS_JOBNAME}}_${{PBS_JOBID}}_{1}.log ::: {{{start}..{end}}} ::: {total_splits}"
 
         print(s1)
         print(s2)
