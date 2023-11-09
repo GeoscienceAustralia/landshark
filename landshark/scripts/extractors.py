@@ -360,13 +360,19 @@ def trainvalidate_entrypoint(
     default=0,
     help="half width of patch size. Patch side length is " "2 x halfwidth + 1",
 )
+@click.option(
+    "--remote",
+    type=str,
+    default='',
+    help="remote dir location. For example in nci could be '/jobfs/'",
+)
 @click.pass_context
 def query(
-    ctx: click.Context, strip: Tuple[int, int], name: str, features: str, halfwidth: int
+    ctx: click.Context, strip: Tuple[int, int], name: str, features: str, halfwidth: int, remote: str
 ) -> None:
     """Extract query data for making prediction images."""
     catching_f = errors.catch_and_exit(query_entrypoint)
-    catching_f(features, ctx.obj.batchMB, ctx.obj.nworkers, halfwidth, strip, name)
+    catching_f(features, ctx.obj.batchMB, ctx.obj.nworkers, halfwidth, strip, name, remote)
 
 
 def query_entrypoint(
@@ -376,6 +382,7 @@ def query_entrypoint(
     halfwidth: int,
     strip: Tuple[int, int],
     name: str,
+    remote_dir_location: str,
 ) -> int:
     """Entrypoint for extracting query data."""
     strip_idx, totalstrips = strip
@@ -384,8 +391,11 @@ def query_entrypoint(
     """Grab a chunk for prediction."""
     log.info("Using {} worker processes".format(nworkers))
 
-    dirname = "query_{}_strip{}of{}".format(name, strip_idx, totalstrips)
-    directory = os.path.join(os.getcwd(), dirname)
+    dirname = "{}query_{}_strip{}of{}".format(remote_dir_location, name, strip_idx, totalstrips)
+    if remote_dir_location == '':
+        directory = os.path.join(os.getcwd(), dirname)
+    else:
+        directory = dirname
     try:
         os.makedirs(directory)
     except FileExistsError:
