@@ -6,7 +6,7 @@ def generate_automation_scripts_on_48_cup_nodes(opts):
     nodes = int(opts.nodes)
     total_splits = 48 * nodes
     name = opts.name
-    pred_stub = "pred_parts.sh"
+    pred_stub = "pred_parts.sh"  # in nci use nci_pred_parts.sh to run query and predictions from jobfs/local disc
 
     for i in range(nodes):
         start = i * 48 + 1
